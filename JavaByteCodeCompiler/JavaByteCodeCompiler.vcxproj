@@ -140,19 +140,28 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="ConstantPoolEntry.cpp" />
+    <ClCompile Include="Frame.cpp" />
     <ClCompile Include="Interpreter.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Parser.cpp" />
-    <ClCompile Include="Tables.cpp" />
+    <ClCompile Include="Method.cpp" />
+    <ClCompile Include="SSAgenerator.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ConstantPoolEntry.h" />
+    <ClInclude Include="Constants.h" />
+    <ClInclude Include="Frame.h" />
     <ClInclude Include="Interpreter.h" />
     <ClInclude Include="Parser.h" />
-    <ClInclude Include="parse_utils.h" />
-    <ClInclude Include="Tables.h" />
+    <ClInclude Include="Method.h" />
+    <ClInclude Include="SSAgenerator.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\..\..\..\..\Downloads\testcases\custom_inputs\Test1.class" />
+    <None Include="custom_inputs\OtherTypes.class" />
+    <None Include="custom_inputs\Test1.class" />
+    <None Include="custom_inputs\Test2.class" />
+    <None Include="inputs\Test.class" />
     <None Include="inputs\Test1.class" />
     <None Include="inputs\Test2.class" />
     <None Include="inputs\Test3.class" />

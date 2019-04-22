@@ -27,7 +27,13 @@
     <ClCompile Include="Interpreter.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Tables.cpp">
+    <ClCompile Include="Frame.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SSAgenerator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Method.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -38,13 +44,19 @@
     <ClInclude Include="ConstantPoolEntry.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="parse_utils.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Interpreter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Tables.h">
+    <ClInclude Include="Constants.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Frame.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SSAgenerator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Method.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -54,5 +66,10 @@
     <None Include="inputs\Test3.class" />
     <None Include="inputs\Test4.class" />
     <None Include="inputs\Test5.class" />
+    <None Include="inputs\Test.class" />
+    <None Include="..\..\..\..\..\Downloads\testcases\custom_inputs\Test1.class" />
+    <None Include="custom_inputs\Test1.class" />
+    <None Include="custom_inputs\Test2.class" />
+    <None Include="custom_inputs\OtherTypes.class" />
   </ItemGroup>
 </Project>

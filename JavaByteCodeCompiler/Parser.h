@@ -3,7 +3,7 @@
 #define PARSER_H
 
 #include "ConstantPoolEntry.h"
-#include "Tables.h"
+#include "Method.h"
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -41,7 +41,6 @@ private:
 
 	//attr parsing
 	void skipAttrList(unsigned int size);
-	Code parseCodeEntry(unsigned short attrNameIndex, unsigned short attrLen);
 
 	//read data types from input stream
 	uint8_t readUInt8();
@@ -50,6 +49,7 @@ private:
 	unsigned int readUInt();
 	int readInt();
 	float readFloat();
+	//might be busted
 	long readLong();
 	double readDouble();
 	void readUChar(unsigned char* dest, int size);
@@ -63,9 +63,7 @@ private:
 	void parseDoubleEntry();
 	void parseClassRefEntry();
 	void parseStrRefEntry();
-	void parseFieldRefEntry();
-	void parseMethodRefEntry();
-	void parseInterfaceMethodRefEntry();
+	void parseClassNameTypeRefEntry();
 	void parseNameTypeDescriptorEntry();
 
 	

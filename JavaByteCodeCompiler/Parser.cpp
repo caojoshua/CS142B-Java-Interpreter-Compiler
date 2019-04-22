@@ -3,6 +3,7 @@
 
 Parser::Parser(std::string s)
 {
+	printf("%s\n", s.c_str());
 	f = std::ifstream(s, std::ios::in | std::ios::binary);
 	constPool.push_back(new NullEntry());
 }
@@ -92,9 +93,11 @@ void Parser::parseConstPool()
 			break;
 		case longTag:
 			parseLongEntry();
+			i += 1;
 			break;
 		case doubleTag:
 			parseDoubleEntry();
+			i += 1;
 			break;
 		case classRefTag:
 			parseClassRefEntry();
@@ -103,13 +106,9 @@ void Parser::parseConstPool()
 			parseStrRefEntry();
 			break;
 		case fieldRefTag:
-			parseFieldRefEntry();
-			break;
 		case methodRefTag:
-			parseMethodRefEntry();
-			break;
 		case interfaceMethodRefTag:
-			parseInterfaceMethodRefEntry();
+			parseClassNameTypeRefEntry();
 			break;
 		case nameTypeDescriptorTag:
 			parseNameTypeDescriptorEntry();
@@ -126,7 +125,7 @@ void Parser::parseConstPool()
 			skipBytes(2);
 			break;
 		default:
-			printf("unrecognized tag byte %d\n", tagByte);
+		printf("unrecognized tag byte '%d' while parsing const pool entry #%d\n", tagByte, i+1);
 			exit(1);
 			break;
 		}
@@ -152,6 +151,7 @@ void Parser::parseMethods()
 		unsigned short nameIndex = readUShort();
 		unsigned short descriptorIndex = readUShort();
 		unsigned short attrCount = readUShort();
+
 		for (int i = 0; i < attrCount; ++i)
 		{
 			unsigned short attrNameIndex = readUShort();
@@ -159,7 +159,22 @@ void Parser::parseMethods()
 			std::string s = constPool[attrNameIndex]->getStr();
 			if (s == "Code")
 			{
-				methods.push_back(Method(accessFlags, constPool[nameIndex]->getStr(), constPool[descriptorIndex]->getStr(), parseCodeEntry(attrNameIndex, attrLen)));
+				unsigned short maxStack = readUShort();
+				unsigned short maxLocals = readUShort();
+				unsigned int codeLen = readUInt();
+				std::vector<uint8_t> byteCodes;
+				//TODO: actually store code rather than run over it
+				for (unsigned int i = 0; i < codeLen; ++i)
+				{
+					byteCodes.push_back(readUInt8());
+				}
+				//TODO: test where expTableLen > 0
+				unsigned short expTableLen = readUShort();
+				skipBytes(expTableLen * 8);
+				unsigned short attrCount = readUShort();
+				skipAttrList(attrCount);
+				methods.push_back(Method(accessFlags, constPool[nameIndex]->getStr(), constPool[descriptorIndex]->getStr(), maxStack, maxLocals, byteCodes));
+				break;
 			}
 			else
 			{
@@ -218,12 +233,15 @@ unsigned int Parser::readUInt()
 
 float Parser::readFloat()
 {
+	char fourChar[4];
+	f.read(fourChar, 4);
 	return 0.0f;
 }
 
 long Parser::readLong()
 {
 	char c[8];
+	f.read(c, 8);
 	long l = (long)c[0];
 	for (int i = 7; i > 0; --i)
 	{
@@ -234,6 +252,8 @@ long Parser::readLong()
 
 double Parser::readDouble()
 {
+	char eightChar[8];
+	f.read(eightChar, 8);
 	return 0.0;
 }
 
@@ -294,43 +314,18 @@ void Parser::parseStrRefEntry()
 	constPool.push_back(new NameRefEntry(readUShort()));
 }
 
-void Parser::parseFieldRefEntry()
+void Parser::parseClassNameTypeRefEntry()
 {
-	constPool.push_back(new ClassNameTypeRefEntry(readUShort(), readUShort()));
-}
-
-void Parser::parseMethodRefEntry()
-{
-	constPool.push_back(new ClassNameTypeRefEntry(readUShort(), readUShort()));
-}
-
-void Parser::parseInterfaceMethodRefEntry()
-{
-	constPool.push_back(new ClassNameTypeRefEntry(readUShort(), readUShort()));
+	unsigned short classRef = readUShort();
+	unsigned short nameTypeRef = readUShort();
+	constPool.push_back(new ClassNameTypeRefEntry(classRef, nameTypeRef));
 }
 
 void Parser::parseNameTypeDescriptorEntry()
 {
-	constPool.push_back(new NameTypeDescriptorEntry(readUShort(), readUShort()));
-}
-
-Code Parser::parseCodeEntry(unsigned short attrNameIndex, unsigned short attrLen)
-{
-	unsigned short maxStack = readUShort();
-	unsigned short maxLocals = readUShort();
-	unsigned int codeLen = readUInt();
-	std::vector<uint8_t> byteCodes;
-	//TODO: actually store code rather than run over it
-	for (unsigned int i = 0; i < codeLen; ++i)
-	{
-		byteCodes.push_back(readUInt8());
-	}
-	//TODO: parse exception table, will assume it has length 0 for now
-	unsigned short expTableLen = readUShort();
-	skipBytes(expTableLen * 8);
-	unsigned short attrCount = readUShort();
-	skipAttrList(attrCount);
-	return Code(maxStack, maxLocals, byteCodes);
+	unsigned short nameIndex = readUShort();
+	unsigned short descriptorIndex = readUShort();
+	constPool.push_back(new NameTypeDescriptorEntry(nameIndex, descriptorIndex));
 }
 
 void Parser::print()
@@ -351,7 +346,7 @@ void Parser::print()
 	printf("method count: %d\n", methodCount);
 	for (Method m : methods)
 	{
-		printf("\t%s\n", m.name.c_str());
+		printf("\t%s\n", m.getName().c_str());
 	}
 }
 

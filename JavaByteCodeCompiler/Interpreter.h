@@ -2,35 +2,14 @@
 #ifndef INTERPRETER_H
 #define INTERPRETER_H
 
+#include "Constants.h"
 #include "ConstantPoolEntry.h"
-#include "Tables.h"
+#include "Method.h"
+#include "Frame.h"
 #include <iostream>
 #include <string>
 #include <vector>
-
-
-const uint8_t iconst_m1 = 0x02;
-const uint8_t iconst_0 = 0x03;
-const uint8_t iconst_1 = 0x04;
-const uint8_t iconst_2 = 0x05;
-const uint8_t iconst_3 = 0x06;	
-const uint8_t iconst_4 = 0x07;
-const uint8_t iconst_5 = 0x08;
-const uint8_t iload = 0x15;
-const uint8_t istore = 0x36;
-const uint8_t iadd = 0x60;
-const uint8_t if_icmpne = 0xa0;
-const uint8_t if_cmpeq = 0x9f;
-const uint8_t if_icompgt = 0xa3;
-const uint8_t if_icomplt = 0xa1;
-const uint8_t ifeq = 0x99;
-const uint8_t ifne = 0x9a;
-const uint8_t ifgt = 0x9d;
-const uint8_t iflt = 0x9b;
-const uint8_t _goto = 0xa7;
-const uint8_t invokestatic = 0xb8;
-const uint8_t _return = 0xb1;
-
+#include <utility>
 
 
 class Interpreter
@@ -39,11 +18,48 @@ private:
 	std::vector<ConstPoolEntry*> constPool;
 	std::vector<Method> methods;
 
+	//interpret the given method
+	int interpret(Method m, std::vector<int> args);
+
+	//get the method with the given name
+	Method getMethod(std::string name);
+
+	//bytecode instructions
+	//loading and storing
+	void iconst(Frame& f, int val);
+	void iload(Frame& f, uint8_t index);
+	void istore(Frame&f, uint8_t index);
+	//arithmetic
+	void iadd(Frame& f);
+	void iinc(Frame& f, uint8_t index, int8_t value);
+	void isub(Frame& f);
+	void imul(Frame& f);
+	void idiv(Frame& f);
+	void ishr(Frame& f);
+	void ishl(Frame& f);
+	//conditionals return the evaluated bool
+	bool if_icmpne(Frame& f);
+	bool if_icmpeq(Frame& f);
+	bool if_icmpgt(Frame& f);
+	bool if_icmpge(Frame& f);
+	bool if_icmplt(Frame& f);
+	bool if_icmple(Frame& f);
+	bool ifeq(Frame& f);
+	bool ifne(Frame& f);
+	bool ifgt(Frame& f);
+	bool ifge(Frame& f);
+	bool iflt(Frame& f);
+	bool ifle(Frame& f);
+	//others
+	void bipush(Frame& f, uint8_t val);
+	void invokestatic(Frame&f, uint16_t constPoolIndex);
+
 public:
 	Interpreter(std::vector<ConstPoolEntry*> constPool, std::vector<Method> methods) :
 		constPool(constPool), methods(methods) {/*TODO: deep copy these vectors*/};
 	~Interpreter();
 
+	//call this to begin interpretation, it will find "main" and interpret it
 	void interpret();
 };
 

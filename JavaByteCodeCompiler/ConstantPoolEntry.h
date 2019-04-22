@@ -2,28 +2,8 @@
 #ifndef CONSTANT_POOL_ENTRY_H
 #define CONSTANT_POOL_ENTRY_H
 
+#include "Constants.h"
 #include <string>
-
-//tab bytes for const pool entries we care about
-const int strTag = 1;
-const int intTag = 3;
-const int floatTag = 4;
-const int longTag = 5;
-const int doubleTag = 6;
-const int classRefTag = 7;
-const int strRefTag = 8;
-const int fieldRefTag = 9;
-const int methodRefTag = 10;
-const int interfaceMethodRefTag = 11;
-const int nameTypeDescriptorTag = 12;
-
-//tag bytes for const pool entries we will skip over
-const int methodHandleTag = 15;
-const int methodTypeTag = 16;
-const int dynamicTag = 17;
-const int invokeDynamicTag = 18;
-const int moduleTag = 19;
-const int packageTag = 20;
 
 union NumericalValue
 {
@@ -84,7 +64,7 @@ public:
 };
 
 //for field, method, and interface method references
-//has pointer to a class ref and name type descriptor
+//has index of a class ref and name type descriptor
 class ClassNameTypeRefEntry : public ConstPoolEntry
 {
 private:
@@ -96,6 +76,7 @@ public:
 	int getNameTypeIndex() { return nameTypeIndex; }
 };
 
+//has index of a name and a type descriptor
 class NameTypeDescriptorEntry : public ConstPoolEntry
 {
 private:
@@ -109,102 +90,6 @@ public:
 
 
 
-
-//chopping block, may use the classes above and remove these
-class IntEntry : public ConstPoolEntry
-{
-private:
-	int i;
-public:
-	IntEntry(int i) : i(i)
-	{
-	}
-};
-
-class FloatEntry : public ConstPoolEntry
-{
-private:
-	float f;
-public:
-	FloatEntry(float f) : f(f)
-	{
-	}
-};
-
-class LongEntry : public ConstPoolEntry
-{
-private:
-	long l;
-public:
-	LongEntry(long l) : l(l)
-	{
-	}
-};
-
-
-class DoubleEntry : public ConstPoolEntry
-{
-private:
-	double d;
-public:
-	DoubleEntry(double d) : d(d)
-	{
-	}
-};
-
-class ClassRefEntry : public ConstPoolEntry
-{
-private:
-	int index;
-public:
-	ClassRefEntry(int index) : index(index)
-	{
-	}
-	int getNameIndex() { return index; }
-};
-
-class StrRefEntry : public ConstPoolEntry
-{
-private:
-	int index;
-public:
-	StrRefEntry(int index) : index(index)
-	{
-	}
-};
-
-class FieldRefEntry : public ConstPoolEntry
-{
-private:
-	int classRefIndex;
-	int nameTypeIndex;
-public:
-	FieldRefEntry(int classRefIndex, int nameTypeIndex) : classRefIndex(classRefIndex), nameTypeIndex(nameTypeIndex)
-	{
-	}
-};
-
-class MethodRefEntry : public ConstPoolEntry
-{
-private:
-	int classRefIndex;
-	int nameTypeIndex;
-public:
-	MethodRefEntry(int classRefIndex, int nameTypeIndex) : classRefIndex(classRefIndex), nameTypeIndex(nameTypeIndex)
-	{
-	}
-};
-
-class InterfaceMethodRefEntry : public ConstPoolEntry
-{
-private:
-	int classRefIndex;
-	int nameTypeIndex;
-public:
-	InterfaceMethodRefEntry(int classRefIndex, int nameTypeIndex) : classRefIndex(classRefIndex), nameTypeIndex(nameTypeIndex)
-	{
-	}
-};
 
 
 #endif
