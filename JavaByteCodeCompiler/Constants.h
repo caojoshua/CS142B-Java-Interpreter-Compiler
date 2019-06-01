@@ -2,7 +2,7 @@
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
 
-#include <vector>
+#include <array>
 
 //constant pool tag bytes
 const int strTag = 1;
@@ -74,6 +74,70 @@ const uint8_t return_b = 0xb1;
 const uint8_t ireturn_b = 0xac;
 //skip over these
 const uint8_t getstatic_b = 0xb2;
+
+
+//vectors of bytecode groupings
+//useful for finding basic block leaders when we only care about branching/goto
+//we need to know the number of bytes a bytecode is made up of to skip it
+const std::array<uint8_t, 12> branchCodes =
+{
+	if_icmpne_b,
+	if_icmpeq_b,
+	if_icmpgt_b,
+	if_icmpge_b,
+	if_icmplt_b,
+	if_icmple_b,
+	ifeq_b,
+	ifne_b,
+	ifgt_b,
+	ifge_b,
+	iflt_b,
+	ifle_b
+};
+
+const std::array<uint8_t, 23> oneByteCodes =
+{
+	iconst_m1_b,
+	iconst_0_b,
+	iconst_1_b,
+	iconst_2_b,
+	iconst_3_b,
+	iconst_4_b,
+	iconst_5_b,
+	iload0_b,
+	iload1_b,
+	iload2_b,
+	iload3_b,
+	istore_0_b,
+	istore_1_b,
+	istore_2_b,
+	istore_3_b,
+	iadd_b,
+	isub_b,
+	imul_b,
+	idiv_b,
+	ishl_b,
+	ishr_b,
+	return_b,
+	ireturn_b
+};
+
+const std::array<uint8_t, 3> twoByteCodes =
+{
+	iload_b,
+	istore_b,
+	bipush_b
+};
+
+const std::array<uint8_t, 4> threeByteCodes =
+{
+	iinc_b,
+	invokestatic_b,
+	invokevirtual_b,
+	getstatic_b
+};
+
+
 
 
 #endif

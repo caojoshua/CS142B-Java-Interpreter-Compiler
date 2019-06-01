@@ -139,6 +139,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="BasicBlock.cpp" />
     <ClCompile Include="ConstantPoolEntry.cpp" />
     <ClCompile Include="Frame.cpp" />
     <ClCompile Include="Interpreter.cpp" />
@@ -146,8 +147,10 @@
     <ClCompile Include="Parser.cpp" />
     <ClCompile Include="Method.cpp" />
     <ClCompile Include="SSAgenerator.cpp" />
+    <ClCompile Include="SSAInstruction.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BasicBlock.h" />
     <ClInclude Include="ConstantPoolEntry.h" />
     <ClInclude Include="Constants.h" />
     <ClInclude Include="Frame.h" />
@@ -155,6 +158,7 @@
     <ClInclude Include="Parser.h" />
     <ClInclude Include="Method.h" />
     <ClInclude Include="SSAgenerator.h" />
+    <ClInclude Include="SSAInstruction.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\..\..\..\Downloads\testcases\custom_inputs\Test1.class" />

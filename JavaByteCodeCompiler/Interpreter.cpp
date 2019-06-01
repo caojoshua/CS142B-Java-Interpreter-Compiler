@@ -137,7 +137,6 @@ int Interpreter::interpret(Method m, std::vector<int> args)
 			case bipush_b:
 				bipush(frame, m.getByte(i++));
 				break;
-			//need to make this actually call the method
 			case invokestatic_b:
 				invokestatic(frame, m.getTwoByte(i));
 				i += 2;

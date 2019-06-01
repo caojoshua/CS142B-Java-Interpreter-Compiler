@@ -1,7 +1,7 @@
 #include "Method.h"
 
 //TODO: fix memory leak
-//when we create methods, we create a vector of Attr* 
+//when we create methods, we create a vector of BasicBlock* 
 //calling operator= on vector will naively copy pointers
 //when returning to the caller, garbage collection
 //will delete the vector and apparently each pointer in the vector
@@ -16,7 +16,7 @@ Method::~Method()
 	}*/
 }
 
-std::string Method::getName()
+std::string Method::getName() const
 {
 	return name;
 }
@@ -60,3 +60,13 @@ int32_t Method::getFourByte(int index)
 	uint16_t b = getTwoByte(index + 2);
 	return (uint32_t) a << 16 | b;
 }
+
+//std::vector<BasicBlock> Method::getBasicBlocks()
+//{
+//	return basicBlocks;
+//}
+//
+//void Method::setBasicBlocks(std::vector<BasicBlock> BBs)
+//{
+//	basicBlocks = BBs;
+//}
