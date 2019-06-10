@@ -1,0 +1,38 @@
+custom_inputs/Test2.class
+**********Interpret**********
+256
+27
+
+**********SSA**********
+***METHOD: bust***
+Basic Block (#0)
+MOV stack0_0, local0_0
+MOV stack1_0, const8
+SHL stack0_1, stack0_0, stack1_0
+RETURN stack0_1
+***METHOD: main***
+Basic Block (#0)
+MOV stack0_0, const1
+CALL bust(stack0_0)
+MOV local1_0, stack0_0
+MOV stack0_1, local1_0
+CALL Println(stack0_1)
+MOV stack0_2, const27
+CALL Println(stack0_2)
+RETURN
+
+**********Register Allocation**********
+bust
+stack0_1: 0
+stack0_0: 0
+stack1_0: 1
+
+main
+stack0_1: 0
+stack0_0: 0
+stack1_0: 1
+stack0_2: 0
+local1_0: 0
+
+
+**********x86 execution**********

@@ -25,6 +25,16 @@ int BasicBlock::getEndLine()
 	return endLine;
 }
 
+int BasicBlock::getSSAstart()
+{
+	return SSAstartLine;
+}
+
+int BasicBlock::getSSAend()
+{
+	return SSAendLine;
+}
+
 int BasicBlock::getInStackDepth()
 {
 	return inStackDepth;
@@ -52,7 +62,35 @@ void BasicBlock::addInstruction(SSA::Instruction * i)
 
 void BasicBlock::addPhi(SSA::Operand op)
 {
-	instructions.insert(instructions.cbegin(), new SSA::PhiInstruction(op));
+	instructions.insert(instructions.cbegin(), new SSA::PhiInstruction(new SSA::Operand(op)));
+}
+
+void BasicBlock::addPhi(SSA::PhiInstruction * phi)
+{
+	instructions.insert(instructions.cbegin(), phi);
+}
+
+void BasicBlock::updatePhiSrc(SSA::Operand dest, int bb, SSA::OperandUse src)
+{
+	for (SSA::Instruction* ins : instructions)
+	{
+		if (*(ins->getDest()) == dest)
+		{
+			ins->updatePhiSrc(bb, src);
+		}
+	}
+}
+
+void BasicBlock::renamePhiSrc(SSA::Operand dest, int bb, SSA::OperandUse src)
+{
+	
+	for (SSA::Instruction* ins : instructions)
+	{
+		if (*(ins->getDest()) == dest)
+		{
+			ins->renamePhiSrc(bb, src);
+		}
+	}
 }
 
 void BasicBlock::addPred(int i)
@@ -72,7 +110,27 @@ void BasicBlock::setInStackDepth(int liveInStackDepth)
 	this->inStackDepth = liveInStackDepth;
 }
 
+void BasicBlock::setSSAstart(int i)
+{
+	SSAstartLine = i;
+}
+
+void BasicBlock::setSSAend(int i)
+{
+	SSAendLine = i;
+}
+
 bool BasicBlock::operator==(BasicBlock & other)
 {
 	return index == other.index;
+}
+
+std::list<SSA::OperandUse> BasicBlock::getLiveIn()
+{
+	return liveIn;
+}
+
+void BasicBlock::addLiveIn(SSA::OperandUse op)
+{
+	liveIn.push_back(SSA::OperandUse(op));
 }

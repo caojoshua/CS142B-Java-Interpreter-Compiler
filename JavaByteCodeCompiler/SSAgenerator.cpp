@@ -3,21 +3,17 @@
 
 
 
-void SSAgenerator::createBasicBlocks(Method& m)
+std::vector<BasicBlock> SSAgenerator::createBasicBlocks(Method& m)
 {
 	std::list<int> leaders = getLeaders(m);
 
 	printf("***METHOD: %s***\n", m.getName().c_str());
-	/*for (std::list<int>::const_iterator i = leaders.cbegin(); i != leaders.cend(); ++i)
-	{
-		printf("%d\n", *i);
-	}
-	printf("\n");*/
-
 	std::vector<BasicBlock> BBs = genBasicBlockCode(m, leaders);
 	insertPhi(BBs);
-	//printf("%d\n", BBs.size());
-	for(int i = 0; i < BBs.size(); ++i)
+	rename(BBs);
+	setSSAstartEnd(BBs);
+	//output SSA because we need to see this for project demo
+	for(unsigned int i = 0; i < BBs.size(); ++i)
 	{
 		BasicBlock BB = BBs[i];
 		printf("Basic Block (#%d)\n", i);
@@ -26,6 +22,7 @@ void SSAgenerator::createBasicBlocks(Method& m)
 			printf("%s\n", i->getStr().c_str());
 		}
 	}
+	return BBs;
 }
 
 std::list<int> SSAgenerator::getLeaders(Method& m)
@@ -68,13 +65,8 @@ std::list<int> SSAgenerator::getLeaders(Method& m)
 			printf("unknown byte code 0x%x\n", byteCode);
 		}
 	}
-	//add the final line into leaders if not done so yet
-	/*if (std::find(std::cbegin(leaders), std::cend(leaders), byteCodeSize - 1) == std::cend(leaders))
-	{
-		leaders.push_front(byteCodeSize - 1);
-	}*/
 	//add final line + 1 into leaders
-	leaders.push_front(byteCodeSize);
+	leaders.push_back(byteCodeSize);
 	leaders.sort();
 	return leaders;
 }
@@ -90,16 +82,6 @@ std::vector<BasicBlock> SSAgenerator::genBasicBlockCode(Method& m, std::list<int
 		index++;
 	}
 	int numBasicBlocks = basicBlocks.size();
-	//link adjacent basic blocks if the last bytecode isn't a branch statement
-	for (int i = 0; i < numBasicBlocks - 1; ++i)
-	{
-		uint8_t byteCode = m.getByte(basicBlocks[i].getEndLine());
-		if (std::find(branchCodes.cbegin(), branchCodes.cend(), byteCode) == branchCodes.cend() || byteCode != goto_b)
-		{
-			basicBlocks[i].addSucc(i + 1);
-			basicBlocks[i + 1].addPred(i);
-		}
-	}
 	int stackCount = 0;
 	for (std::vector<BasicBlock>::iterator iter = basicBlocks.begin(); iter != basicBlocks.end(); ++iter)
 	{
@@ -108,9 +90,11 @@ std::vector<BasicBlock> SSAgenerator::genBasicBlockCode(Method& m, std::list<int
 		basicBlock.setInStackDepth(stackCount);
 		int i = basicBlock.getStartLine();
 		int tempCount = 0;
+		uint8_t lastByteCode = 0;
 		while (i <= basicBlock.getEndLine())
 		{
 			uint8_t byteCode = m.getByte(i++);
+			lastByteCode = byteCode;
 			switch (byteCode)
 			{
 				//loading and storing
@@ -216,7 +200,7 @@ std::vector<BasicBlock> SSAgenerator::genBasicBlockCode(Method& m, std::list<int
 					i += 2;
 					break;
 				case if_icmplt_b:
-					cond(basicBlocks, basicBlock, SSA::CondBranchInstruction::le, tempCount, stackCount - 2, stackCount - 1, getBBindex(basicBlocks, i+2), getBBindex(basicBlocks, i + m.getTwoByte(i) - 1));
+					cond(basicBlocks, basicBlock, SSA::CondBranchInstruction::lt, tempCount, stackCount - 2, stackCount - 1, getBBindex(basicBlocks, i+2), getBBindex(basicBlocks, i + m.getTwoByte(i) - 1));
 					stackCount -= 2;
 					i += 2;
 					break;
@@ -242,7 +226,7 @@ std::vector<BasicBlock> SSAgenerator::genBasicBlockCode(Method& m, std::list<int
 					i += 2;
 					break;
 				case iflt_b:
-					cond(basicBlocks, basicBlock, SSA::CondBranchInstruction::le, tempCount, --stackCount, getBBindex(basicBlocks, i+2), getBBindex(basicBlocks, i + m.getTwoByte(i) - 1));
+					cond(basicBlocks, basicBlock, SSA::CondBranchInstruction::lt, tempCount, --stackCount, getBBindex(basicBlocks, i+2), getBBindex(basicBlocks, i + m.getTwoByte(i) - 1));
 					i += 2;
 					break;
 				case ifle_b:
@@ -263,18 +247,23 @@ std::vector<BasicBlock> SSAgenerator::genBasicBlockCode(Method& m, std::list<int
 					iconst(basicBlock, stackCount++, m.getByte(i++));
 					break;
 				case invokestatic_b:
-					stackCount += call(basicBlock, m.getTwoByte(i));
+					call(basicBlock, stackCount, m.getTwoByte(i));
 					i += 2;
 					break;
+				//only println
 				case invokevirtual_b:
-					basicBlock.addInstruction(new SSA::PrintInstruction(SSA::Operand(SSA::Operand::stack, --stackCount)));
+				{
+					std::list<SSA::Operand*> args;
+					args.push_back(new SSA::Operand(SSA::Operand::stack, --stackCount));
+					basicBlock.addInstruction(new SSA::CallInstruction("Println", args));
 					i += 2;
 					break;
+				}
 				case return_b:
 					basicBlock.addInstruction(new SSA::ReturnInstruction());
 					break;
 				case ireturn_b:
-					basicBlock.addInstruction(new SSA::ReturnInstruction(SSA::Operand(SSA::Operand::stack, --stackCount)));
+					basicBlock.addInstruction(new SSA::ReturnInstruction(new SSA::Operand(SSA::Operand::stack, --stackCount)));
 					break;
 				//skip over these
 				case getstatic_b:
@@ -283,6 +272,13 @@ std::vector<BasicBlock> SSAgenerator::genBasicBlockCode(Method& m, std::list<int
 				default:
 					printf("unknown byte code 0x%x\n", byteCode);
 			}
+		}
+		//link basic block to the next basic block if the last bytecode isn't a branch or goto statement
+		int index = basicBlock.getIndex();
+		if (std::find(branchCodes.cbegin(), branchCodes.cend(), lastByteCode) == branchCodes.cend() && lastByteCode != goto_b && (unsigned int) (index + 1) < basicBlocks.size())
+		{
+			basicBlock.addSucc(index + 1);
+			basicBlocks[index + 1].addPred(index);
 		}
 	}
 	return basicBlocks;
@@ -296,40 +292,43 @@ void SSAgenerator::insertPhi(std::vector<BasicBlock>& BBs)
 	getVars(vars, BBs);
 	for(SSA::Operand var : vars)
 	{
-		std::list<int> workList;
-		std::list<int> hasPhi;
-		for(int i = 0; i < BBs.size(); ++i)
-		{
-			if(containsAssignment(BBs[i], var))
+		//only interested in variables, not constants
+		if (var.isVar()) {
+			std::list<int> workList;
+			std::list<int> hasPhi;
+			for (unsigned int i = 0; i < BBs.size(); ++i)
 			{
-				workList.push_back(i);
-			}
-		}
-		std::list<int> everOnWorkList = workList;
-		while(!workList.empty())
-		{
-			int n = workList.front();
-			workList.pop_front();
-			std::list<int> df;
-			dominanceFrontier(df, BBs, BBs[n]);
-			for(int d : df)
-			{
-				//insert phi into BBs[d] if it doesn't already have phi AND
-				//(var is not stack OR basic block live-in stack depth is greater than variable value)
-				//simple phi optimization: if var is a stack var, do not insert Phi if the live-in stack depth of the
-				//dominance frontier is smaller than or equal to the stack variable index
-				if(std::find(hasPhi.cbegin(), hasPhi.cend(), d) == hasPhi.cend() && (var.getType() != SSA::Operand::stack || BBs[d].getInStackDepth() > var.getVal()))
+				if (containsAssignment(BBs[i], var))
 				{
-					BBs[d].addPhi(var);
-					hasPhi.push_back(d);
-					if(std::find(everOnWorkList.cbegin(), everOnWorkList.cend(), d) == everOnWorkList.cend())
+					workList.push_back(i);
+				}
+			}
+			std::list<int> everOnWorkList = workList;
+			while (!workList.empty())
+			{
+				int n = workList.front();
+				workList.pop_front();
+				std::list<int> df;
+				dominanceFrontier(df, BBs, BBs[n]);
+				for (int d : df)
+				{
+					//only consider phi when BBs[d] doesn't already have phi AND
+					//(var is not stack OR basic block live-in stack depth is greater than variable value)
+					//simple phi optimization: if var is a stack var, do not insert Phi if the live-in stack depth of the
+					//dominance frontier is smaller than or equal to the stack variable index
+					if (std::find(hasPhi.cbegin(), hasPhi.cend(), d) == hasPhi.cend() && (var.getType() != SSA::Operand::stack || BBs[d].getInStackDepth() > var.getVal()))
 					{
-						//we haven't checked if d is on workList, so we do that before pushing it
-						if(std::find(workList.cbegin(), workList.cend(), d) == workList.cend())
+						BBs[d].addPhi(var);
+						hasPhi.push_back(d);
+						if (std::find(everOnWorkList.cbegin(), everOnWorkList.cend(), d) == everOnWorkList.cend())
 						{
-							workList.push_back(d);
+							//we haven't checked if d is on workList, so we do that before pushing it
+							if (std::find(workList.cbegin(), workList.cend(), d) == workList.cend())
+							{
+								workList.push_back(d);
+							}
+							everOnWorkList.push_back(d);
 						}
-						everOnWorkList.push_back(d);
 					}
 				}
 			}
@@ -337,33 +336,51 @@ void SSAgenerator::insertPhi(std::vector<BasicBlock>& BBs)
 	}
 }
 
+void SSAgenerator::rename(std::vector<BasicBlock>& BBs)
+{
+	std::vector<std::list<int>> dt;
+	dominanceTree(dt, BBs);
+	rename(BBs, dt, std::list<std::pair<SSA::Operand,int>>(), std::list<int>(), 0);
+}
+
+void SSAgenerator::setSSAstartEnd(std::vector<BasicBlock>& BBs)
+{
+	int index = 0;
+	for (BasicBlock& bb : BBs)
+	{
+		bb.setSSAstart(index);
+		index += bb.getInstructions().size();
+		//end line is the start index + number of instructions - 1
+		bb.setSSAend(index - 1);
+	}
+}
+
 
 void SSAgenerator::iconst(BasicBlock & b, int stackNum, int val)
 {
-	b.addInstruction(new SSA::MovInstruction(SSA::Operand(SSA::Operand::stack, stackNum), SSA::Operand(SSA::Operand::constant, val)));
+	b.addInstruction(new SSA::MovInstruction(new SSA::Operand(SSA::Operand::stack, stackNum), new SSA::Operand(SSA::Operand::constant, val)));
 }
 void SSAgenerator::iload(BasicBlock & b, int stackNum, int localNum)
 {
-	b.addInstruction(new SSA::MovInstruction(SSA::Operand(SSA::Operand::stack, stackNum), SSA::Operand(SSA::Operand::local, localNum)));
+	b.addInstruction(new SSA::MovInstruction(new SSA::Operand(SSA::Operand::stack, stackNum), new SSA::Operand(SSA::Operand::local, localNum)));
 }
 void SSAgenerator::istore(BasicBlock & b, int stackNum, int localNum)
 {
-	b.addInstruction(new SSA::MovInstruction(SSA::Operand(SSA::Operand::local, localNum), SSA::Operand(SSA::Operand::stack, stackNum)));
+	b.addInstruction(new SSA::MovInstruction(new SSA::Operand(SSA::Operand::local, localNum), new SSA::Operand(SSA::Operand::stack, stackNum)));
 }
 void SSAgenerator::unary(BasicBlock & b, SSA::UnaryInstruction::Opcode opcode, int dest, int other)
 {
-	b.addInstruction(new SSA::UnaryInstruction(opcode, SSA::Operand(SSA::Operand::local, dest), SSA::Operand(SSA::Operand::constant, other)));
+	b.addInstruction(new SSA::UnaryInstruction(opcode, new SSA::Operand(SSA::Operand::local, dest), new SSA::Operand(SSA::Operand::constant, other)));
 }
 void SSAgenerator::binary(BasicBlock & b, SSA::BinaryInstruction::Opcode opcode, int dest, int other)
 {
-	b.addInstruction(new SSA::BinaryInstruction(opcode, SSA::Operand(SSA::Operand::stack, dest),
-							SSA::Operand(SSA::Operand::stack, dest), SSA::Operand(SSA::Operand::stack, other)));
+	b.addInstruction(new SSA::BinaryInstruction(opcode, new SSA::Operand(SSA::Operand::stack, dest),
+							new SSA::Operand(SSA::Operand::stack, dest), new SSA::Operand(SSA::Operand::stack, other)));
 }
 void SSAgenerator::cond(std::vector<BasicBlock>& BBs, BasicBlock & b, SSA::CondBranchInstruction::Opcode opcode, int tmp, int src1, int src2, int BBindex1, int BBindex2)
 {
-	SSA::Operand cond = SSA::Operand(SSA::Operand::temp, tmp);
-	b.addInstruction(new SSA::CmpInstruction(cond, SSA::Operand(SSA::Operand::stack, src1), SSA::Operand(SSA::Operand::stack, src2)));
-	b.addInstruction(new SSA::CondBranchInstruction(opcode, cond, SSA::Branch(BBindex1), SSA::Branch(BBindex2)));
+	b.addInstruction(new SSA::CmpInstruction(new SSA::Operand(SSA::Operand::temp, tmp), new SSA::Operand(SSA::Operand::stack, src1), new SSA::Operand(SSA::Operand::stack, src2)));
+	b.addInstruction(new SSA::CondBranchInstruction(opcode, new SSA::Operand(SSA::Operand::temp, tmp), SSA::Branch(BBindex1), SSA::Branch(BBindex2)));
 	b.addSucc(BBindex1);
 	b.addSucc(BBindex2);
 	BBs[BBindex1].addPred(b.getIndex());
@@ -372,37 +389,44 @@ void SSAgenerator::cond(std::vector<BasicBlock>& BBs, BasicBlock & b, SSA::CondB
 
 void SSAgenerator::cond(std::vector<BasicBlock>& BBs, BasicBlock & b, SSA::CondBranchInstruction::Opcode opcode, int tmp, int src1, int BBindex1, int BBindex2)
 {
-	SSA::Operand cond = SSA::Operand(SSA::Operand::temp, tmp);
-	b.addInstruction(new SSA::CmpInstruction(cond, SSA::Operand(SSA::Operand::stack, src1), SSA::Operand(SSA::Operand::constant, 0)));
-	b.addInstruction(new SSA::CondBranchInstruction(opcode, cond, SSA::Branch(BBindex1), SSA::Branch(BBindex2)));
+	b.addInstruction(new SSA::CmpInstruction(new SSA::Operand(SSA::Operand::temp, tmp), new SSA::Operand(SSA::Operand::stack, src1), new SSA::Operand(SSA::Operand::constant, 0)));
+	b.addInstruction(new SSA::CondBranchInstruction(opcode, new SSA::Operand(SSA::Operand::temp, tmp), SSA::Branch(BBindex1), SSA::Branch(BBindex2)));
 	b.addSucc(BBindex1);
 	b.addSucc(BBindex2);
 	BBs[BBindex1].addPred(b.getIndex());
 	BBs[BBindex2].addPred(b.getIndex());
 }
 
-int SSAgenerator::call(BasicBlock & b, int constPoolIndex)
+void SSAgenerator::call(BasicBlock & b, int& stackCount, int constPoolIndex)
 {
 	//get name of method and add object to the basic block
 	ConstPoolEntry* methodRef = constPool[constPoolIndex];
 	ConstPoolEntry* nameType = constPool[methodRef->getNameTypeIndex()];
 	ConstPoolEntry* strRef = constPool[nameType->getNameIndex()];
 	Method m = getMethod(strRef->getStr());
-	b.addInstruction(new SSA::CallInstruction(m));
 	//descriptor format (param1param2...paramN)return
 	//e.g. (II)V takes to ints and returns void
 	std::string descriptor = m.getDescriptor();
 	//number of params is number of chars between '(' and ')'
 	//main method has string as arg, we will ignore main's args
 	//in a fully functioning JVM we would need to deal with types other than int(I)
-	int stackOffset = m.getName() == "main" ? 0 : -(descriptor.find(')') - descriptor.find('(') - 1);
+	//add params to a list so we create a CALL instruction
+	int numParams = m.getName() == "main" ? 0 : (int)(descriptor.find(')') - descriptor.find('(') - 1);
+	std::list<SSA::Operand*> args;
+	for(int i = 0; i < numParams; ++i)
+	{
+		//push front because top most stack values of right-most args
+		args.push_front(new SSA::Operand(SSA::Operand::stack, --stackCount));
+	}
 	//return type is last character of descriptor
+	//if return type is Int, put an operand back on top of stack
 	char returnType = descriptor[descriptor.length() - 1];
 	if (returnType == 'I')
 	{
-		stackOffset += 1;
+		++stackCount;
 	}
-	return stackOffset;
+	//create CALL instruction and add the b
+	b.addInstruction(new SSA::CallInstruction(m.getName(), args));
 }
 
 Method SSAgenerator::getMethod(std::string name)
@@ -420,7 +444,7 @@ Method SSAgenerator::getMethod(std::string name)
 
 int SSAgenerator::getBBindex(std::vector<BasicBlock> BBs, int line)
 {
-	for (int i = 0; i < BBs.size(); ++i)
+	for (unsigned int i = 0; i < BBs.size(); ++i)
 	{
 		if (BBs[i].getStartLine() == line) {
 			return i;
@@ -479,7 +503,7 @@ void SSAgenerator::dominanceFrontier(std::list<int>& df, std::vector<BasicBlock>
 bool SSAgenerator::inDominanceFrontier(std::vector<BasicBlock>& BBs, BasicBlock & d, BasicBlock & n)
 {
 	//return false if d dominates n or d==n because if d strictly dominates n, n is not in DF(d)
-	if(dominates(BBs, d, n) || d == n)
+	if(dominates(BBs, d, n) || d.getIndex() == n.getIndex())
 	{
 		return false;
 	}
@@ -526,11 +550,12 @@ void SSAgenerator::getVars(std::list<SSA::Operand>& vars, std::vector<BasicBlock
 		for (SSA::Instruction* instruction : BB.getInstructions())
 		{
 			//only add to var list if its not already in it
-			SSA::Operand dest = instruction->getDest();
-			if(dest.getType() != SSA::Operand::null_op && std::find(vars.cbegin(), vars.cend(), dest) == vars.cend())
+			SSA::Operand* dest(instruction->getDest());
+			if(dest->getType() != SSA::Operand::null_op && std::find(vars.cbegin(), vars.cend(), *dest) == vars.cend())
 			{
-				vars.push_back(SSA::Operand(dest));
+				vars.push_back(SSA::Operand(*dest));
 			}
+			delete dest;
 		}
 	}
 }
@@ -539,7 +564,72 @@ bool SSAgenerator::containsAssignment(BasicBlock & BB, SSA::Operand o)
 {
 	for (SSA::Instruction* instruction : BB.getInstructions())
 	{
-		if (instruction->getDest() == o)
+		SSA::Operand* dest = instruction->getDest();
+		if (*dest == o)
+		{
+			return true;
+		}
+		delete dest;
+	}
+	return false;
+}
+
+
+
+void SSAgenerator::dominanceTree(std::vector<std::list<int>>& dt, std::vector<BasicBlock> BBs)
+{
+	for(BasicBlock bb1 : BBs)
+	{
+		dt.push_back(std::list<int>());
+		for(BasicBlock bb2 : BBs)
+		{
+			//add bb2's index to bb1's outgoing edges if bb1 dominates bb2, but not if bb1 and bb2 are equal
+			if(dominates(BBs, bb1, bb2) && bb1.getIndex() != bb2.getIndex())
+			{
+				dt.back().push_back(bb2.getIndex());
+			}
+		}
+	}
+}
+
+SSA::OperandUse SSAgenerator::genName(std::list<std::pair<SSA::Operand, int>>& stack, SSA::Operand& op)
+{
+	SSA::Operand::OpType opType = op.getType();
+	int val = op.getVal();
+	for (std::pair<SSA::Operand, int>& pair : stack)
+	{
+		if (op == pair.first)
+		{
+			++pair.second;
+			return SSA::OperandUse(opType, val, pair.second);
+		}
+	}
+	//create a new entry in stack if it doesn't exist yet
+	stack.push_back(std::pair<SSA::Operand, int>(SSA::Operand(opType, val), 0));
+	return SSA::OperandUse(opType, val, 0);
+}
+
+SSA::OperandUse SSAgenerator::getName(std::list<std::pair<SSA::Operand, int>>& stack, SSA::Operand& op)
+{
+	SSA::Operand::OpType opType = op.getType();
+	int val = op.getVal();
+	for (std::pair<SSA::Operand, int> pair : stack)
+	{
+		if (op == pair.first)
+		{
+			return SSA::OperandUse(opType, val, pair.second);
+		}
+	}
+	//create a new entry in stack if it doesn't exist yet
+	stack.push_back(std::pair<SSA::Operand, int>(SSA::Operand(opType, val), 0));
+	return SSA::OperandUse(opType, val, 0);
+}
+
+bool SSAgenerator::onStack(std::list<std::pair<SSA::Operand, int>>& stack, SSA::Operand & op)
+{
+	for (std::pair<SSA::Operand, int> pair : stack)
+	{
+		if (op == pair.first)
 		{
 			return true;
 		}
@@ -547,17 +637,76 @@ bool SSAgenerator::containsAssignment(BasicBlock & BB, SSA::Operand o)
 	return false;
 }
 
+void SSAgenerator::rename(std::vector<BasicBlock>& BBs, std::vector<std::list<int>>& dt, std::list<std::pair<SSA::Operand,int>>& stack, std::list<int>& visited, int b)
+{
+	//rename algorithm here if its still up: https://www.ics.uci.edu/~yeouln/course/ssa.pdf
+	//return if we already visited b, otherwise, visit b
+	if(std::find(visited.cbegin(), visited.cend(), b) != visited.cend())
+	{
+		return;
+	}
+	visited.push_back(b);
+	for(SSA::Instruction* ins : BBs[b].getInstructions())
+	{
+		//don't need to go through phi functions first because they are already in the front
+		SSA::Operand* src1 = ins->getSrc1();
+		//replace right hand variables by getting values from top of stack
+		std::vector<SSA::Operand*> srcs = ins->getSrcs();
+		std::vector<SSA::OperandUse> newSrcs;
+		for(SSA::Operand* src : srcs)
+		{
+			if(src->isVar())
+			{
+				newSrcs.push_back(getName(stack, *src));
+			}
+			else {
+				newSrcs.push_back(*src);
+			}
+		}
+		ins->setSrcs(newSrcs);
+		//same for dest but instead we GENERATE a name
+		SSA::Operand* dest = ins->getDest();
+		if(dest->isVar())
+		{
+			ins->setDest(genName(stack, *dest));
+		}
+		delete dest;
+	}
+	//for each successor to b(NOT dt) add phi src from top of stack to phi functions with dest
+	for (int succ : BBs[b].getSucc())
+	{
+		for (SSA::Instruction* ins : BBs[succ].getInstructions())
+		{
+			SSA::Operand* dest = ins->getDest();
+			if (ins->isPhi() && onStack(stack, *dest))
+			{
+				ins->updatePhiSrc(b, getName(stack, *dest));
+			}
+			delete dest;
+		}
+	}
+	//DFS in dominance tree
+	for (int i : dt[b])
+	{
+		rename(BBs, dt, stack, visited, i);
+	}
+	//no need to unwind stack unless we need to free memory
+}
+
 SSAgenerator::~SSAgenerator()
 {
 }
 
-void SSAgenerator::generate()
+SSAoutput SSAgenerator::generate()
 {
+	SSAoutput out;
 	for (Method m : methods)
 	{
 		if (m.getName() != "<init>")
 		{
-			createBasicBlocks(m);
+			std::vector<BasicBlock> BBs = createBasicBlocks(m);
+			out.addMethod(m.getName(), BBs);
 		}
 	}
+	return out;
 }

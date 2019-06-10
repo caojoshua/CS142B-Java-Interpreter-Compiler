@@ -1,0 +1,53 @@
+inputs/Test1.class
+**********Interpret**********
+53
+
+**********SSA**********
+***METHOD: printInt***
+Basic Block (#0)
+MOV stack0_0, local0_0
+CALL Println(stack0_0)
+RETURN
+***METHOD: main***
+Basic Block (#0)
+MOV stack0_0, const0
+MOV local1_0, stack0_0
+MOV stack0_1, local1_0
+MOV stack1_0, const20
+ADD stack0_2, stack0_1, stack1_0
+MOV local2_0, stack0_2
+MOV stack0_3, local2_0
+MOV local3_0, stack0_3
+MOV stack0_4, local1_0
+CMP tmp0, stack0_4, const0
+BR_NE tmp0, #1, #2
+Basic Block (#1)
+MOV stack0_5, const53
+MOV local3_1, stack0_5
+Basic Block (#2)
+PHI local3_2, (BB#0, local3_0), (BB#1, local3_1)
+MOV stack0_6, local3_2
+CALL printInt(stack0_6)
+RETURN
+
+**********Register Allocation**********
+printInt
+stack0_0: 0
+
+main
+stack0_0: 0
+stack0_6: 0
+local3_2: 0
+local3_1: 0
+stack0_5: 0
+local3_0: 0
+stack0_3: 0
+local2_0: 0
+stack0_2: 0
+stack0_1: 0
+stack0_4: 1
+local1_0: 1
+stack1_0: 2
+
+
+**********x86 execution**********

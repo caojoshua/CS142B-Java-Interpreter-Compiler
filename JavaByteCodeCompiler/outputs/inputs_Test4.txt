@@ -1,0 +1,61 @@
+inputs/Test4.class
+**********Interpret**********
+10
+
+**********SSA**********
+***METHOD: printInt***
+Basic Block (#0)
+MOV stack0_0, local0_0
+CALL Println(stack0_0)
+RETURN
+***METHOD: main***
+Basic Block (#0)
+MOV stack0_0, const0
+MOV local1_0, stack0_0
+MOV stack0_1, const0
+MOV local2_0, stack0_1
+Basic Block (#1)
+PHI local2_1, (BB#0, local2_0), (BB#2, local2_2)
+PHI local1_1, (BB#0, local1_0), (BB#2, local1_2)
+MOV stack0_2, local2_1
+MOV stack1_0, const5
+CMP tmp0, stack0_2, stack1_0
+BR_GTE tmp0, #2, #3
+Basic Block (#2)
+MOV stack0_3, local1_1
+MOV stack1_1, local2_1
+ADD stack0_4, stack0_3, stack1_1
+MOV local1_2, stack0_4
+INC local2_2, const1
+BRUNCOND #1
+Basic Block (#3)
+PHI local2_3, (BB#1, local2_1)
+PHI local1_3, (BB#1, local1_1)
+MOV stack0_5, local1_3
+CALL printInt(stack0_5)
+RETURN
+
+**********Register Allocation**********
+printInt
+stack0_0: 0
+
+main
+stack0_0: 0
+stack0_5: 0
+local1_3: 0
+local2_3: 0
+local2_2: 0
+stack0_4: 0
+stack0_3: 0
+stack0_2: 0
+stack0_1: 0
+local1_2: 1
+stack1_1: 1
+stack1_0: 1
+local2_1: 2
+local1_0: 3
+local1_1: 3
+local2_0: 1
+
+
+**********x86 execution**********

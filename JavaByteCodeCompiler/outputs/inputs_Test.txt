@@ -1,0 +1,29 @@
+inputs/Test.class
+**********Interpret**********
+0
+
+**********SSA**********
+***METHOD: printInt***
+Basic Block (#0)
+MOV stack0_0, local0_0
+CALL Println(stack0_0)
+RETURN
+***METHOD: main***
+Basic Block (#0)
+MOV stack0_0, const0
+MOV local1_0, stack0_0
+MOV stack0_1, local1_0
+CALL printInt(stack0_1)
+RETURN
+
+**********Register Allocation**********
+printInt
+stack0_0: 0
+
+main
+stack0_0: 0
+stack0_1: 0
+local1_0: 0
+
+
+**********x86 execution**********

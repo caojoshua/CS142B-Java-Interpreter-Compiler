@@ -142,23 +142,35 @@
     <ClCompile Include="BasicBlock.cpp" />
     <ClCompile Include="ConstantPoolEntry.cpp" />
     <ClCompile Include="Frame.cpp" />
+    <ClCompile Include="InterferenceGraph.cpp" />
     <ClCompile Include="Interpreter.cpp" />
+    <ClCompile Include="Interval.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Parser.cpp" />
     <ClCompile Include="Method.cpp" />
+    <ClCompile Include="RegAllocator.cpp" />
+    <ClCompile Include="RegMap.cpp" />
     <ClCompile Include="SSAgenerator.cpp" />
     <ClCompile Include="SSAInstruction.cpp" />
+    <ClCompile Include="SSAoutput.cpp" />
+    <ClCompile Include="x86executor.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BasicBlock.h" />
     <ClInclude Include="ConstantPoolEntry.h" />
     <ClInclude Include="Constants.h" />
     <ClInclude Include="Frame.h" />
+    <ClInclude Include="InterferenceGraph.h" />
     <ClInclude Include="Interpreter.h" />
+    <ClInclude Include="Interval.h" />
     <ClInclude Include="Parser.h" />
     <ClInclude Include="Method.h" />
+    <ClInclude Include="RegAllocator.h" />
+    <ClInclude Include="RegMap.h" />
     <ClInclude Include="SSAgenerator.h" />
     <ClInclude Include="SSAInstruction.h" />
+    <ClInclude Include="SSAoutput.h" />
+    <ClInclude Include="x86executor.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\..\..\..\Downloads\testcases\custom_inputs\Test1.class" />

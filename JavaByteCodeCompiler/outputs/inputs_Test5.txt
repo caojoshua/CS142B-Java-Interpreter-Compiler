@@ -1,0 +1,89 @@
+inputs/Test5.class
+**********Interpret**********
+230
+
+**********SSA**********
+***METHOD: printInt***
+Basic Block (#0)
+MOV stack0_0, local0_0
+CALL Println(stack0_0)
+RETURN
+***METHOD: main***
+Basic Block (#0)
+MOV stack0_0, const0
+MOV local1_0, stack0_0
+MOV stack0_1, const0
+MOV local2_0, stack0_1
+Basic Block (#1)
+PHI local2_1, (BB#0, local2_0), (BB#5, local2_6)
+PHI local1_1, (BB#0, local1_0), (BB#5, local1_7)
+MOV stack0_2, local2_1
+MOV stack1_0, const10
+CMP tmp0, stack0_2, stack1_0
+BR_GTE tmp0, #2, #6
+Basic Block (#2)
+PHI local2_2, (BB#1, local2_1)
+PHI local1_2, (BB#1, local1_1)
+MOV stack0_3, local2_2
+MOV stack1_1, const5
+CMP tmp0, stack0_3, stack1_1
+BR_NE tmp0, #3, #4
+Basic Block (#3)
+PHI local2_3, (BB#2, local2_2)
+PHI local1_3, (BB#2, local1_2)
+MOV stack0_4, local1_3
+MOV stack1_2, local2_3
+ADD stack0_5, stack0_4, stack1_2
+MOV local1_4, stack0_5
+BRUNCOND #5
+Basic Block (#4)
+PHI local2_4, (BB#2, local2_2)
+PHI local1_5, (BB#2, local1_2)
+INC local1_6, const25
+Basic Block (#5)
+PHI local2_5, (BB#3, local2_3), (BB#4, local2_4)
+PHI local1_7, (BB#3, local1_4), (BB#4, local1_6)
+INC local2_6, const1
+BRUNCOND #1
+Basic Block (#6)
+PHI local2_7, (BB#1, local2_1)
+PHI local1_8, (BB#1, local1_1)
+MOV stack0_6, local1_8
+CALL printInt(stack0_6)
+RETURN
+
+**********Register Allocation**********
+printInt
+stack0_0: 0
+
+main
+stack0_0: 0
+stack0_6: 0
+local1_8: 0
+local2_7: 0
+local1_7: 0
+local2_5: 0
+local2_4: 0
+stack0_5: 0
+stack0_4: 0
+local1_3: 0
+stack0_2: 0
+stack0_1: 0
+local2_6: 1
+local2_0: 2
+stack0_3: 0
+local1_5: 3
+local1_1: 3
+local2_1: 4
+stack1_0: 1
+local2_3: 3
+local1_4: 4
+stack1_2: 4
+local1_0: 1
+local1_6: 3
+local1_2: 4
+local2_2: 5
+stack1_1: 3
+
+
+**********x86 execution**********
