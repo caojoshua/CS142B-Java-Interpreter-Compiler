@@ -35,7 +35,6 @@ printInt
 stack0_0: 0
 
 main
-stack0_0: 0
 stack0_6: 0
 local3_2: 0
 local3_1: 0
@@ -45,6 +44,7 @@ stack0_3: 0
 local2_0: 0
 stack0_2: 0
 stack0_1: 0
+stack0_0: 0
 stack0_4: 1
 local1_0: 1
 stack1_0: 2

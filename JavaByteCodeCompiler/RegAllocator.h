@@ -11,7 +11,6 @@
 class RegAllocator
 {
 private:
-	SSAoutput ssa;
 	void computeLiveIntervals(IntervalList& intervals, std::vector<BasicBlock>& bbs);
 	//Chaitin's algorithm to color nodes/assign minimal registers
 	//stores SSA operand to register map inside map
@@ -22,9 +21,9 @@ private:
 	//recursive helper for isLoopHeader
 	int isLoopHeaderR(std::vector<BasicBlock>& bbs, std::list<int>& visited, int src, int b, int prev);
 public:
-	RegAllocator(SSAoutput ssa) : ssa(ssa) {}
+	RegAllocator() {}
 	~RegAllocator();
-	void regAlloc(RegMap map);
+	void regAlloc(SSAoutput& ssa);
 };
 
 #endif

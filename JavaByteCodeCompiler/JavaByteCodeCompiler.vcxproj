@@ -145,6 +145,7 @@
     <ClCompile Include="InterferenceGraph.cpp" />
     <ClCompile Include="Interpreter.cpp" />
     <ClCompile Include="Interval.cpp" />
+    <ClCompile Include="JITmethod.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Parser.cpp" />
     <ClCompile Include="Method.cpp" />
@@ -160,6 +161,8 @@
     <ClInclude Include="ConstantPoolEntry.h" />
     <ClInclude Include="Constants.h" />
     <ClInclude Include="Frame.h" />
+    <ClInclude Include="JITmethod.h" />
+    <ClInclude Include="x86constants.h" />
     <ClInclude Include="InterferenceGraph.h" />
     <ClInclude Include="Interpreter.h" />
     <ClInclude Include="Interval.h" />
@@ -173,7 +176,6 @@
     <ClInclude Include="x86executor.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\..\..\..\Downloads\testcases\custom_inputs\Test1.class" />
     <None Include="custom_inputs\OtherTypes.class" />
     <None Include="custom_inputs\Test1.class" />
     <None Include="custom_inputs\Test2.class" />

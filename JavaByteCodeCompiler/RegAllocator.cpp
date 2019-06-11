@@ -261,9 +261,9 @@ RegAllocator::~RegAllocator()
 {
 }
 
-void RegAllocator::regAlloc(RegMap map)
+void RegAllocator::regAlloc(SSAoutput& ssa)
 {
-	for (SSAmethod m : ssa.getOutput())
+	for (SSAmethod& m : ssa.getOutput())
 	{
 		printf("%s\n", m.getName().c_str());
 		//compute intervals
@@ -273,7 +273,9 @@ void RegAllocator::regAlloc(RegMap map)
 		InterferenceGraph IG;
 		intervals.constructInterferenceGraph(IG);
 		//color nodes
+		RegMap map;
 		chaitin(map, IG);
+		m.addRegMap(map);
 		//output map
 		printf("%s\n", map.getStr().c_str());
 	}

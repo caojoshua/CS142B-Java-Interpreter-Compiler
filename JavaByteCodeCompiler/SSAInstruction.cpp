@@ -132,6 +132,11 @@ std::string SSA::MovInstruction::getStr() const
 	return "MOV " + dest->getStr() + ", " + src->getStr();
 }
 
+SSAopcode SSA::MovInstruction::getSSAopcode() const
+{
+	return MOV;
+}
+
 SSA::Operand* SSA::MovInstruction::getDest() const
 {
 	return new OperandUse(dest);
@@ -179,6 +184,17 @@ std::string SSA::UnaryInstruction::getStr() const
 			return "INC" + right;
 		case dec:
 			return "DEC" + right;
+	}
+}
+
+SSAopcode SSA::UnaryInstruction::getSSAopcode() const
+{
+	switch(opcode)
+	{
+		case inc:
+			return INC;
+		case dec:
+			return DEC;
 	}
 }
 
@@ -240,6 +256,25 @@ std::string SSA::BinaryInstruction::getStr() const
 	}
 }
 
+SSAopcode SSA::BinaryInstruction::getSSAopcode() const
+{
+	switch(opcode)
+	{
+	case add:
+		return ADD;
+	case sub:
+		return SUB;
+	case mul:
+		return MUL;
+	case div:
+		return DIV;
+	case shl:
+		return SHL;
+	case shr:
+		return SHR;
+	}
+}
+
 SSA::Operand* SSA::BinaryInstruction::getDest() const
 {
 	return new OperandUse(dest);
@@ -295,6 +330,11 @@ void SSA::BinaryInstruction::setSrcs(std::vector<OperandUse> srcs)
 std::string SSA::CmpInstruction::getStr() const
 {
 	return "CMP " + cond->getStr() + ", " + src1->getStr() + ", " + src2->getStr();
+}
+
+SSAopcode SSA::CmpInstruction::getSSAopcode() const
+{
+	return CMP;
 }
 
 SSA::Operand* SSA::CmpInstruction::getDest() const
@@ -382,6 +422,11 @@ std::string SSA::CondBranchInstruction::getStr() const
 	return s;
 }
 
+SSAopcode SSA::CondBranchInstruction::getSSAopcode() const
+{
+	return CONDBRANCH;
+}
+
 SSA::Operand* SSA::CondBranchInstruction::getSrc1() const
 {
 	return new Operand(*cond);
@@ -414,6 +459,11 @@ std::string SSA::UncondBranchInstruction::getStr() const
 	return "BRUNCOND " + branch1.getStr();
 }
 
+SSAopcode SSA::UncondBranchInstruction::getSSAopcode() const
+{
+	return UNCONDBRANCH;
+}
+
 std::string SSA::CallInstruction::getStr() const
 {
 	std::string s = "CALL " + methodName;
@@ -429,6 +479,11 @@ std::string SSA::CallInstruction::getStr() const
 		s += ")";
 	}
 	return s;
+}
+
+SSAopcode SSA::CallInstruction::getSSAopcode() const
+{
+	return CALL;
 }
 
 std::vector<SSA::Operand*> SSA::CallInstruction::getSrcs() const
@@ -459,6 +514,11 @@ std::string SSA::ReturnInstruction::getStr() const
 	if (isVoid)
 		return "RETURN";
 	return "RETURN " + src->getStr();
+}
+
+SSAopcode SSA::ReturnInstruction::getSSAopcode() const
+{
+	return RET;
 }
 
 SSA::Operand* SSA::ReturnInstruction::getSrc1() const
@@ -496,6 +556,11 @@ std::string SSA::PhiInstruction::getStr() const
 		s += ", (BB#" + std::to_string(src.first) + ", " + src.second->getStr() + ")";
 	}
 	return s;
+}
+
+SSAopcode SSA::PhiInstruction::getSSAopcode() const
+{
+	return PHI;
 }
 
 SSA::Operand* SSA::PhiInstruction::getDest() const

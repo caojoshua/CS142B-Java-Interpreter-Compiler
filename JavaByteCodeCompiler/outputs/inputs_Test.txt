@@ -21,9 +21,9 @@ printInt
 stack0_0: 0
 
 main
-stack0_0: 0
 stack0_1: 0
 local1_0: 0
+stack0_0: 0
 
 
 **********x86 execution**********

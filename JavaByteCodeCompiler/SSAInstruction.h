@@ -8,6 +8,30 @@
 #include <vector>
 #include <list>
 
+
+//SSA opcodes, useful for x86 generation
+//slides so we don't support mul, div, shifts, but we include anyway
+enum SSAopcode
+{
+	ADD,
+	SUB,
+	MUL,
+	DIV,
+	SHL,
+	SHR,
+	INC,
+	DEC,
+	MOV,
+	CALL,
+	CMP,
+	CONDBRANCH,
+	UNCONDBRANCH,
+	RET,
+	PHI
+};
+
+
+
 //lot of memory leaks here
 
 namespace SSA
@@ -79,6 +103,7 @@ namespace SSA
 		Instruction();
 		~Instruction();
 		virtual std::string getStr() const = 0;
+		virtual SSAopcode getSSAopcode() const = 0;
 		virtual Operand* getDest() const;
 		virtual Operand* getSrc1() const;
 		virtual Operand* getSrc2() const;
@@ -104,6 +129,7 @@ namespace SSA
 	public:
 		MovInstruction(Operand* op1, Operand* op2) : dest(op1), src(op2) {}
 		std::string getStr() const;
+		virtual SSAopcode getSSAopcode() const;
 		Operand* getDest() const;
 		virtual Operand* getSrc1() const;
 		virtual std::vector<Operand*> getSrcs() const;
@@ -123,6 +149,7 @@ namespace SSA
 	public:
 		UnaryInstruction(Opcode opcode, Operand* dest, Operand* op2) : opcode(opcode), dest(dest), src(op2) {}
 		std::string getStr() const;
+		virtual SSAopcode getSSAopcode() const;
 		Operand* getDest() const;
 		virtual Operand* getSrc1() const;
 		virtual std::vector<Operand*> getSrcs() const;
@@ -143,6 +170,7 @@ namespace SSA
 	public:
 		BinaryInstruction(Opcode opcode, Operand* dest, Operand* op1, Operand* op2) : opcode(opcode), dest(dest), src1(op1), src2(op2) {}
 		std::string getStr() const;
+		virtual SSAopcode getSSAopcode() const;
 		Operand* getDest() const;
 		virtual Operand* getSrc1() const;
 		virtual Operand* getSrc2() const;
@@ -162,6 +190,7 @@ namespace SSA
 	public:
 		CmpInstruction(Operand* cond, Operand* op1, Operand* op2) : cond(cond), src1(op1), src2(op2) {}
 		std::string getStr() const;
+		virtual SSAopcode getSSAopcode() const;
 		Operand* getDest() const;
 		virtual Operand* getSrc1() const;
 		virtual Operand* getSrc2() const;
@@ -185,6 +214,7 @@ namespace SSA
 		//CondBranchInstruction(Opcode opcode, Operand* cond, Branch branch1, Branch branch2) : opcode(opcode), cond(cond), branch1(branch1), branch2(branch2) {
 		CondBranchInstruction(Opcode opcode, Operand* cond, Branch branch1, Branch branch2);
 		std::string getStr() const;
+		virtual SSAopcode getSSAopcode() const;
 		Operand* getSrc1() const;
 		virtual std::vector<Operand*> getSrcs() const;
 		void setSrc1(OperandUse op);
@@ -198,6 +228,7 @@ namespace SSA
 	public:
 		UncondBranchInstruction(Branch branch1) : branch1(branch1) {}
 		std::string getStr() const;
+		virtual SSAopcode getSSAopcode() const;
 	};
 
 	class CallInstruction : public Instruction
@@ -208,6 +239,7 @@ namespace SSA
 	public:
 		CallInstruction(std::string m, std::list<Operand*> args) : methodName(m), args(args){}
 		std::string getStr() const;
+		virtual SSAopcode getSSAopcode() const;
 		virtual std::vector<Operand*> getSrcs() const;
 		virtual void setSrcs(std::vector<OperandUse> srcs);
 	};
@@ -221,6 +253,7 @@ namespace SSA
 		ReturnInstruction() : isVoid(true), src(new Operand(Operand::constant, 0)) {}
 		ReturnInstruction(Operand* op) : isVoid(false), src(op) {}
 		std::string getStr() const;
+		virtual SSAopcode getSSAopcode() const;
 		virtual Operand* getSrc1() const;
 		virtual std::vector<Operand*> getSrcs() const;
 		void setSrc1(OperandUse op);
@@ -236,6 +269,7 @@ namespace SSA
 	public:
 		PhiInstruction(Operand* op) : op(op) {}
 		std::string getStr() const;
+		virtual SSAopcode getSSAopcode() const;
 		Operand* getDest() const;
 		void setDest(OperandUse op);
 		//if source with index bb doesn't exist, adds the source op

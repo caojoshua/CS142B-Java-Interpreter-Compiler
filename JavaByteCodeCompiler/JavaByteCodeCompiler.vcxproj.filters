@@ -60,6 +60,9 @@
     <ClCompile Include="x86executor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="JITmethod.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Parser.h">
@@ -107,6 +110,12 @@
     <ClInclude Include="x86executor.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="x86constants.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="JITmethod.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="inputs\Test1.class" />
@@ -115,7 +124,6 @@
     <None Include="inputs\Test4.class" />
     <None Include="inputs\Test5.class" />
     <None Include="inputs\Test.class" />
-    <None Include="..\..\..\..\..\Downloads\testcases\custom_inputs\Test1.class" />
     <None Include="custom_inputs\Test1.class" />
     <None Include="custom_inputs\Test2.class" />
     <None Include="custom_inputs\OtherTypes.class" />

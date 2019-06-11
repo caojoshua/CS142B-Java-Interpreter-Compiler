@@ -30,3 +30,13 @@ std::vector<BasicBlock> SSAmethod::getBasicBlocks()
 {
 	return bbs;
 }
+
+RegMap SSAmethod::getMap()
+{
+	return map;
+}
+
+void SSAmethod::addRegMap(RegMap map)
+{
+	this->map = map;
+}

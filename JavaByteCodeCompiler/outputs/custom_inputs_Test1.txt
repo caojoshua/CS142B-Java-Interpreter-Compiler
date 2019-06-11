@@ -28,9 +28,9 @@ stack0_0: 1
 
 main
 stack0_1: 0
-stack1_0: 1
 local1_0: 0
 stack0_0: 0
+stack1_0: 1
 
 
 **********x86 execution**********

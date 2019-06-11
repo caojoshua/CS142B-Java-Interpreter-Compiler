@@ -45,12 +45,11 @@ int main(int argc, char* argv[])
 				SSAoutput SSAout = ssa.generate();
 
 				printf("\n**********Register Allocation**********\n");
-				RegAllocator alloc = RegAllocator(SSAout);
-				RegMap map;
-				alloc.regAlloc(map);
+				RegAllocator alloc = RegAllocator();
+				alloc.regAlloc(SSAout);
 
 				printf("\n**********x86 execution**********\n");
-				x86executor x86(SSAout, map);
+				x86executor x86(SSAout);
 				x86.execute();
 			}
 			catch (...)
