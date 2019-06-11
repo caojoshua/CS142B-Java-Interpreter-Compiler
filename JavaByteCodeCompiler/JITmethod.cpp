@@ -1,18 +1,15 @@
 #include "JITmethod.h"
 
 
-
-
-
 JITmethod::JITmethod(std::string name) : name(name), count(0)
 {
 	//create heap and pointer to the heap
-	HANDLE hHeap = HeapCreate(HEAP_CREATE_ENABLE_EXECUTE, 0, 0);
+	hHeap = HeapCreate(HEAP_CREATE_ENABLE_EXECUTE, 0, 0);
 	if (hHeap == NULL)
 	{
-		printf("heap is null\n");
+		printf("heap is null");
 	}
-	uint8_t* heapPtr = (uint8_t*) HeapAlloc(hHeap, 0, 1000);
+	heapPtr = (uint8_t*) HeapAlloc(hHeap, 0, 1000);
 	if(heapPtr == NULL)
 	{
 		printf("failed to allocate on heap\n");
@@ -31,7 +28,7 @@ std::string JITmethod::getName()
 void JITmethod::emit(uint8_t byte)
 {
 	*(heapPtr + count++) = byte;
-	printf("0x%X ", byte);
+	printf("\\x%X", byte);
 }
 
 void JITmethod::emit16(uint16_t byte)
@@ -63,6 +60,8 @@ void JITmethod::emit64(uint64_t byte)
 
 void JITmethod::execute()
 {
+	//maybe attach a return to make sure we always return, double returns shouldn't be a big deal
+	//emit(0xc3);
 	void (*funcPtr)() = (void(*)()) heapPtr;
 	funcPtr();
 	printf("returned from x86 execution!");

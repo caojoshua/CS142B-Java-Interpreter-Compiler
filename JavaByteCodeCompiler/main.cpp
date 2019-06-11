@@ -7,12 +7,14 @@
 #include "RegAllocator.h"
 #include "RegMap.h"
 #include "x86executor.h"
+//#include "X86constants.h"
+//#include "JITmethod.h"
 
 int main(int argc, char* argv[])
 {
 	for (int i = 1; i < argc; ++i)
 	{
-		//if (std::string(*(argv + i)) == "inputs/Test3") {
+		if (std::string(*(argv + i)) == "inputs/Test") {
 			try
 			{
 				//redirect output to an output file
@@ -56,6 +58,6 @@ int main(int argc, char* argv[])
 			{
 				printf("An exception occurred.\n");
 			}
-		//}
+		}
 	}
 }

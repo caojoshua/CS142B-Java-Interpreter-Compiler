@@ -102,6 +102,11 @@ int SSA::Operand::getVal() const
 	return val;
 }
 
+bool SSA::Operand::isConst() const
+{
+	return opType == constant;
+}
+
 bool SSA::Operand::isVar() const
 {
 	return opType == stack || opType == local/* || opType == temp*/;
@@ -144,7 +149,7 @@ SSA::Operand* SSA::MovInstruction::getDest() const
 
 SSA::Operand* SSA::MovInstruction::getSrc1() const
 {
-	return new Operand(*src);
+	return new OperandUse(src);
 }
 
 std::vector<SSA::Operand*> SSA::MovInstruction::getSrcs() const
@@ -205,7 +210,7 @@ SSA::Operand* SSA::UnaryInstruction::getDest() const
 
 SSA::Operand* SSA::UnaryInstruction::getSrc1() const
 {
-	return new Operand(*src);
+	return new OperandUse(src);
 }
 
 std::vector<SSA::Operand*> SSA::UnaryInstruction::getSrcs() const
@@ -282,12 +287,12 @@ SSA::Operand* SSA::BinaryInstruction::getDest() const
 
 SSA::Operand* SSA::BinaryInstruction::getSrc1() const
 {
-	return new Operand(*src1);
+	return new OperandUse(src1);
 }
 
 SSA::Operand* SSA::BinaryInstruction::getSrc2() const
 {
-	return new Operand(*src2);
+	return new OperandUse(src2);
 }
 
 std::vector<SSA::Operand*> SSA::BinaryInstruction::getSrcs() const
@@ -344,12 +349,12 @@ SSA::Operand* SSA::CmpInstruction::getDest() const
 
 SSA::Operand* SSA::CmpInstruction::getSrc1() const
 {
-	return new Operand(*src1);
+	return new OperandUse(src1);
 }
 
 SSA::Operand* SSA::CmpInstruction::getSrc2() const
 {
-	return new Operand(*src2);
+	return new OperandUse(src2);
 }
 
 std::vector<SSA::Operand*> SSA::CmpInstruction::getSrcs() const
@@ -429,7 +434,7 @@ SSAopcode SSA::CondBranchInstruction::getSSAopcode() const
 
 SSA::Operand* SSA::CondBranchInstruction::getSrc1() const
 {
-	return new Operand(*cond);
+	return new OperandUse(cond);
 }
 
 std::vector<SSA::Operand*> SSA::CondBranchInstruction::getSrcs() const
@@ -523,7 +528,7 @@ SSAopcode SSA::ReturnInstruction::getSSAopcode() const
 
 SSA::Operand* SSA::ReturnInstruction::getSrc1() const
 {
-	return new Operand(*src);
+	return new OperandUse(src);
 }
 
 std::vector<SSA::Operand*> SSA::ReturnInstruction::getSrcs() const

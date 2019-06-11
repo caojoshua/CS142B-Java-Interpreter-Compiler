@@ -162,7 +162,6 @@
     <ClInclude Include="Constants.h" />
     <ClInclude Include="Frame.h" />
     <ClInclude Include="JITmethod.h" />
-    <ClInclude Include="x86constants.h" />
     <ClInclude Include="InterferenceGraph.h" />
     <ClInclude Include="Interpreter.h" />
     <ClInclude Include="Interval.h" />
@@ -173,6 +172,7 @@
     <ClInclude Include="SSAgenerator.h" />
     <ClInclude Include="SSAInstruction.h" />
     <ClInclude Include="SSAoutput.h" />
+    <ClInclude Include="X86constants.h" />
     <ClInclude Include="x86executor.h" />
   </ItemGroup>
   <ItemGroup>

@@ -1,83 +1,158 @@
 
 #include "x86executor.h"
-#include "x86constants.h"
 
 
-void x86executor::genX86(SSAmethod& m)
+void x86executor::createJITmethods()
 {
-	//create a pair of string and code and save it to JITcode
-	//std::pair<std::string, uint8_t*> pair("",nullptr);
-	//pair.first = m.getName();
+	for (SSAmethod& m : SSAout.getOutput())
+	{
+		JITmethods.push_back(JITmethod(m.getName()));
+	}
+}
 
-	////create heap and pointer to the heap
-	//HANDLE hHeap = HeapCreate(HEAP_CREATE_ENABLE_EXECUTE, 0, 0);
-	//if (hHeap == NULL)
-	//{
-	//	printf("heap is null\n");
-	//}
-	//uint8_t* heapPtr = (uint8_t*) HeapAlloc(hHeap, 0, 1000);
-	//if(heapPtr == NULL)
-	//{
-	//	printf("failed to allocate on heap\n");
-	//}
-	//pair.second = heapPtr;
-	////push pair to JITcode
-	//JITcode.push_back(pair);
-
-	JITmethod jit(m.getName());
-
+void x86executor::genX86(JITmethod& jit, SSAmethod& m)
+{
 	//define useful variables
 	std::vector<BasicBlock> bbs = m.getBasicBlocks();
 	RegMap map = m.getMap();
 	//count represents what byte we are on
 	int count = 0;
 
+	//output jit name
+	printf("***%s***\n", jit.getName().c_str());
+
+	//first insert prologue
+	prologue(jit);
+
 	//sequentially go through basic blocks and generate code
 	for (int i = 0; i < bbs.size(); ++i)
 	{
 		BasicBlock bb = bbs[i];
 		//go through instructions of bb
-		for (SSA::Instruction* instruction : bb.getInstructions())
+		for (SSA::Instruction* ins : bb.getInstructions())
 		{
+			SSAopcode opcode = ins->getSSAopcode();
+			switch (opcode)
+			{
+			case MOV:
+			mov(jit, map, SSA::OperandUse(ins->getDest()), SSA::OperandUse(ins->getSrc1()));
+			break;
+			case ADD:
+			break;
+			case SUB:
+			break;
+			case MUL:
+			break;
+			case DIV:
+			break;
+			case SHL:
+			break;
+			case SHR:
+			break;
+			case INC:
+			break;
+			case DEC:
+			break;
+			case CALL:
+			break;
+			case CMP:
+			break;
+			case CONDBRANCH:
+			break;
+			case UNCONDBRANCH:
+			break;
+			case RET:
+				ret(jit);
+				break;
+			case PHI:
+				//we ignore these, special handling of phi functions at end of each basic block
+			default:
+				//shouldn't happen
+				break;
+			}
+		}
+		//TODO: special handling of phi functions
+	}
+	//printf("%X\n",EAX);
+}
 
+void x86executor::mov(JITmethod& jit, RegMap& map, SSA::OperandUse dest, SSA::OperandUse src)
+{
+	//MOV r imm
+	if (src.isConst())
+	{
+		//+rd: encode register into lower three bits of opcode
+		jit.emit(MOV_R_IMM + intToReg[map.getReg(dest)]);
+		//id: 4-byte immediate
+		jit.emit32(src.getVal());
+	}
+	//MOV r r
+	else if (src.isVar())
+	{
+		//jit.emit(MOV_R_RM);
+		//// /r, modrm contains both register and r/m
+		//jit.emit(modrm(MOD_REG, intToReg[map.getReg(dest)], intToReg[map.getReg(src)]));
+		//jit.emit(MOV_RM_R);
+		//// /r, modrm contains both register and r/m
+		//jit.emit(modrm(MOD_REG, intToReg[map.getReg(src)], intToReg[map.getReg(dest)]));
+		mov_rrm(jit, intToReg[map.getReg(src)], intToReg[map.getReg(dest)]);
+	}
+}
+
+void x86executor::ret(JITmethod & jit)
+{
+	////mov esp, ebp
+	mov_rrm(jit, ESP, EBP);
+	pop(jit, EBP);
+	jit.emit(RET86);
+	printf("\n");
+}
+
+void x86executor::mov_rrm(JITmethod& jit, uint8_t dest, uint8_t src)
+{
+	jit.emit(MOV_R_RM);
+	jit.emit(modrm(MOD_REG, dest, src));
+	printf("\n");
+}
+
+void x86executor::pop(JITmethod & jit, uint8_t reg)
+{
+	jit.emit(POP_RM);
+	jit.emit(modrm(MOD_REG, 0, reg));
+	printf("\n");
+}
+
+void x86executor::push(JITmethod & jit, uint8_t reg)
+{
+	jit.emit(PUSH_RM);
+	// /6 store 6 into reg 
+	jit.emit(modrm(MOD_REG, 6, reg));
+	printf("\n");
+}
+
+JITmethod & x86executor::getJITmethods(std::string name)
+{
+	for (JITmethod& jit : JITmethods)
+	{
+		if (jit.getName() == name)
+		{
+			return jit;
 		}
 	}
 }
 
-void x86executor::emit(uint8_t* heapPtr, int& count, uint8_t byte)
+uint8_t x86executor::modrm(uint8_t mod, uint8_t regOpcode, uint8_t rm)
 {
-	*(heapPtr + count++) = byte;
-	printf("0x%X ", byte);
+	return (mod << 6) + (regOpcode << 3) + rm;
 }
 
-void x86executor::emit16(uint8_t* heapPtr, int& count, uint16_t byte)
+void x86executor::prologue(JITmethod & jit)
 {
-	for (int i = 0; i < 2; ++i)
-	{
-		emit(heapPtr, count, (uint8_t)(byte & 0xFF));
-		byte = byte >> 8;
-	}
+	push(jit, EBP);
+	mov_rrm(jit, EBP, ESP);
 }
 
-void x86executor::emit32(uint8_t* heapPtr, int& count, uint32_t byte)
-{
-	for (int i = 0; i < 4; ++i)
-	{
-		emit(heapPtr, count, (uint8_t)(byte & 0xFF));
-		byte = byte >> 8;
-	}
-}
-
-void x86executor::emit64(uint8_t* heapPtr, int& count, uint64_t byte)
-{
-	for (int i = 0; i < 8; ++i)
-	{
-		emit(heapPtr, count, (uint8_t)(byte & 0xFF));
-		byte = byte >> 8;
-	}
-}
-
-x86executor::x86executor(SSAoutput out)
+x86executor::x86executor(SSAoutput out) : SSAout(out)
 {
 	//this->SSAout = out;
 	//count = 0;
@@ -141,11 +216,21 @@ x86executor::~x86executor()
 
 void x86executor::execute()
 {
-	//gen x86 code
-	for (SSAmethod& m : SSAout.getOutput())
+	//first create methods, we need to do this first or else we won't know addresses of methods when we want to call them
+	createJITmethods();
+ 	//generate machine code
+	for (JITmethod& jit : JITmethods)
 	{
-		genX86(m);
+		//find corresponding SSAmethod
+		for (SSAmethod& m : SSAout.getOutput())
+		{
+			if (m.getName() == jit.getName())
+			{
+				genX86(jit, m);
+			}
+		}
 	}
+	//execute main function
 	for (JITmethod jit : JITmethods)
 	{
 		if (jit.getName() == "main")

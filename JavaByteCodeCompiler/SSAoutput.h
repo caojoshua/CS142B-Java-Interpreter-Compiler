@@ -30,7 +30,7 @@ public:
 	SSAoutput();
 	~SSAoutput();
 	void addMethod(std::string name, std::vector<BasicBlock> bbs);
-	std::list<SSAmethod> getOutput();
+	std::list<SSAmethod>& getOutput();
 };
 
 #endif

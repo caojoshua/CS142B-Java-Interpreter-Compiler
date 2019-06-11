@@ -66,7 +66,15 @@ void RegAllocator::computeLiveIntervals(IntervalList& intervals, std::vector<Bas
 			for (SSA::Operand* srcOpd : instruction->getSrcs())
 			{
 				//CLOSED interval for to(subtract 1)
-				bIntervals.addRange(SSA::OperandUse(srcOpd), startIndex, startIndex + j - 1);
+				//SPECIAL CASE(not sure if im supposed to do this) if first basic block and first line, have range from (-1,-1)
+				if (j == 0 && b.getIndex() == 0)
+				{
+					bIntervals.addRange(SSA::OperandUse(srcOpd), -1, -1);
+				}
+				else
+				{
+					bIntervals.addRange(SSA::OperandUse(srcOpd), startIndex, startIndex + j - 1);
+				}
 				//make sure its not already in live set
 				if(std::find(live.cbegin(), live.cend(), *srcOpd) == live.cend() && srcOpd->isVar())
 				{

@@ -110,10 +110,10 @@
     <ClInclude Include="x86executor.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="x86constants.h">
+    <ClInclude Include="JITmethod.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="JITmethod.h">
+    <ClInclude Include="X86constants.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

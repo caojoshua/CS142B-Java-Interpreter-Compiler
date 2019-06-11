@@ -16,7 +16,7 @@ void SSAoutput::addMethod(std::string name, std::vector<BasicBlock> bbs)
 	out.push_back(SSAmethod(name, bbs));
 }
 
-std::list<SSAmethod> SSAoutput::getOutput()
+std::list<SSAmethod>& SSAoutput::getOutput()
 {
 	return out;
 }

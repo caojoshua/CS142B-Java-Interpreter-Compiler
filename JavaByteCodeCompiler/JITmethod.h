@@ -4,7 +4,10 @@
 
 #include <string>
 #include <windows.h>
-#include <tchar.h>
+
+//uint8_t nani = 0;
+
+//std::string bust;
 
 class JITmethod
 {

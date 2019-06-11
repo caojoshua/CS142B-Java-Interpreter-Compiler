@@ -13,6 +13,7 @@
 //slides so we don't support mul, div, shifts, but we include anyway
 enum SSAopcode
 {
+	MOV,
 	ADD,
 	SUB,
 	MUL,
@@ -21,7 +22,6 @@ enum SSAopcode
 	SHR,
 	INC,
 	DEC,
-	MOV,
 	CALL,
 	CMP,
 	CONDBRANCH,
@@ -61,6 +61,7 @@ namespace SSA
 		virtual std::string getStr() const;
 		virtual OpType getType() const;
 		virtual int getVal() const;
+		virtual bool isConst() const;
 		virtual bool isVar() const;
 		virtual bool isUseVar() const;
 		virtual int getUse() const;
