@@ -1,7 +1,7 @@
 #include "JITmethod.h"
 
 
-JITmethod::JITmethod(std::string name) : name(name), count(0)
+JITmethod::JITmethod(std::string name) : name(name), count(0), numParams(0)
 {
 	//create heap and pointer to the heap
 	hHeap = HeapCreate(HEAP_CREATE_ENABLE_EXECUTE, 0, 0);
@@ -25,10 +25,25 @@ std::string JITmethod::getName()
 	return name;
 }
 
+uint8_t* JITmethod::getHeapPtr()
+{
+	return heapPtr;
+}
+
+int JITmethod::getNumParams()
+{
+	return numParams;
+}
+
+void JITmethod::setNumParams(int n)
+{
+	numParams = n;
+}
+
 void JITmethod::emit(uint8_t byte)
 {
 	*(heapPtr + count++) = byte;
-	printf("\\x%X", byte);
+	printf("\\x%02X", byte);
 }
 
 void JITmethod::emit16(uint16_t byte)
@@ -62,7 +77,8 @@ void JITmethod::execute()
 {
 	//maybe attach a return to make sure we always return, double returns shouldn't be a big deal
 	//emit(0xc3);
-	void (*funcPtr)() = (void(*)()) heapPtr;
+	printf("\n****x86 output****\n");
+	fptr funcPtr = (fptr) heapPtr;
 	funcPtr();
 	printf("returned from x86 execution!");
 }

@@ -5,9 +5,7 @@
 #include <string>
 #include <windows.h>
 
-//uint8_t nani = 0;
-
-//std::string bust;
+typedef void (*fptr)();
 
 class JITmethod
 {
@@ -17,12 +15,19 @@ private:
 	std::string name;
 	//keeps track of what byte we are on while adding instructions
 	int count;
+	//param0 maps to local0_0, param1 maps to local1_0, etc.
+	int numParams;
 public:
 	JITmethod(std::string name);
 	~JITmethod();
 
 	//getters
 	std::string getName();
+	uint8_t*getHeapPtr();
+	int getNumParams();
+
+	//setters
+	void setNumParams(int n);
 
 	//emit functions
 	void emit(uint8_t byte);

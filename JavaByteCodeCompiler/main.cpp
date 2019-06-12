@@ -14,7 +14,9 @@ int main(int argc, char* argv[])
 {
 	for (int i = 1; i < argc; ++i)
 	{
-		if (std::string(*(argv + i)) == "inputs/Test") {
+		//set this to "" to run all
+		std::string testCase = "";
+		if (testCase == "" || std::string(*(argv + i)) == testCase) {
 			try
 			{
 				//redirect output to an output file

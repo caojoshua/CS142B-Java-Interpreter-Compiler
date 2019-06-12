@@ -65,6 +65,11 @@ std::list<std::pair<int, SSA::Operand*>> SSA::Instruction::getPhiSrcs()
 	return std::list<std::pair<int, Operand*>>();
 }
 
+std::string SSA::Instruction::getMethodName()
+{
+	return std::string();
+}
+
 SSA::Operand::Operand(const Operand & other)
 {
 	opType = other.opType;
@@ -486,6 +491,11 @@ std::string SSA::CallInstruction::getStr() const
 	return s;
 }
 
+std::string SSA::CallInstruction::getMethodName()
+{
+	return methodName;
+}
+
 SSAopcode SSA::CallInstruction::getSSAopcode() const
 {
 	return CALL;
@@ -496,7 +506,7 @@ std::vector<SSA::Operand*> SSA::CallInstruction::getSrcs() const
 	std::vector<Operand*> v;
 	for (Operand* arg : args)
 	{
-		v.push_back(arg);
+		v.push_back(new OperandUse(arg));
 	}
 	return v;
 }

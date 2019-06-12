@@ -28,6 +28,14 @@ const std::array<uint8_t, 6> intToReg =
 	EDI
 };
 
+//order in which to store params, calling c++ function first looks at ECX
+const std::array<uint8_t, 6> callerSavedRegs =
+{
+	ECX,
+	EAX,
+	EDX
+};
+
 
 //modrm
 const uint8_t MOD_ADDR = 0b00;
@@ -39,12 +47,20 @@ const uint8_t MOD_REG = 0b11;
 //opcodes
 //we only care about 32s, e.g. in manual: MOV_r32_imm32
 //RM = R/M = register/memory
+const uint8_t ADD_RM_IMM = 0x81;	//add imm to rm
+const uint8_t ADD_RM_R = 0x01;		//add r to rm
+const uint8_t CALL_RM = 0xFF;		//call near absolute of address in r/m
+const uint8_t CMP_RM_R = 0x39;		//compare RM against R
+const uint8_t CMP_RM_IMM = 0x83;	//compare RM against IMM
 const uint8_t MOV_R_IMM = 0xB8;		//mov IMM to R
 const uint8_t MOV_R_RM = 0x8B;		//mov RM to R
 const uint8_t MOV_RM_R = 0x89;		//mov R to RM
-const uint8_t POP_RM = 0x8F;
+const uint8_t POP_RM = 0x8F;		//pop rm off of stack
 const uint8_t PUSH_RM = 0xFF;		//push value of RM to stack
+const uint8_t PUSH_IMM = 0x68;		//push IMM onto stack
 const uint8_t RET86 = 0xc3;			//return to caller, 86 because naming conflict
+const uint8_t SUB_RM_R = 0x29;		//sub r from rm
+const uint8_t SUB_RM_IMM = 0x81;	//sub imm from rm
 
 
 #endif

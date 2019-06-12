@@ -120,6 +120,8 @@ namespace SSA
 		virtual void renamePhiSrc(int bb, OperandUse op);
 		virtual bool isPhi() const;
 		virtual std::list<std::pair<int, Operand*>> getPhiSrcs();
+		//for call instruction
+		virtual std::string getMethodName();
 	};
 
 	class MovInstruction : public Instruction
@@ -146,6 +148,7 @@ namespace SSA
 	private:
 		Opcode opcode;
 		Operand* dest;
+		//src should always be constant
 		Operand* src;
 	public:
 		UnaryInstruction(Opcode opcode, Operand* dest, Operand* op2) : opcode(opcode), dest(dest), src(op2) {}
@@ -240,6 +243,7 @@ namespace SSA
 	public:
 		CallInstruction(std::string m, std::list<Operand*> args) : methodName(m), args(args){}
 		std::string getStr() const;
+		virtual std::string getMethodName();
 		virtual SSAopcode getSSAopcode() const;
 		virtual std::vector<Operand*> getSrcs() const;
 		virtual void setSrcs(std::vector<OperandUse> srcs);
@@ -251,7 +255,7 @@ namespace SSA
 		bool isVoid;
 		Operand* src;
 	public:
-		ReturnInstruction() : isVoid(true), src(new Operand(Operand::constant, 0)) {}
+		ReturnInstruction() : isVoid(true), src(new Operand(Operand::null_op, 0)) {}
 		ReturnInstruction(Operand* op) : isVoid(false), src(op) {}
 		std::string getStr() const;
 		virtual SSAopcode getSSAopcode() const;
