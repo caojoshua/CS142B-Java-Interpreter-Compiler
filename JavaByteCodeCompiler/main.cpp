@@ -14,7 +14,7 @@ int main(int argc, char* argv[])
 {
 	for (int i = 1; i < argc; ++i)
 	{
-		//set this to "" to run all
+		//set this to "" to run all, otherwise set to name of single input e.g. inputs/Test1
 		std::string testCase = "";
 		if (testCase == "" || std::string(*(argv + i)) == testCase) {
 			try

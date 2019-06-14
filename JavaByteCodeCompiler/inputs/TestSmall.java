@@ -11,12 +11,17 @@ public class TestSmall {
 	public static void main(String[] args) {
 		// int x = 0;
 		// dead(3);
-		int y = 68;
-		int z = 31;
-		int owen = y + z;
-		owen++;
-		System.out.println(owen);
-		System.out.println(50-23);
+		int poo = 55;
+		if(5<poo)
+		{
+			System.out.println(poo);
+		}
+		// int y = 68;
+		// int z = 31;
+		// int owen = y + z;
+		// owen++;
+		// System.out.println(owen);
+		// System.out.println(50-23);
 		// printInt(x);
 		//System.out.println(x);
 	}

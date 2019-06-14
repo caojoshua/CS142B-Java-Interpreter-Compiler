@@ -23,6 +23,9 @@ private:
 
 	//creates JIT methods and adds them to JITmethods
 	void createJITmethods();
+	//special handling to phi, remove phi functions and insert movs 
+	//this part moved to BEFORE register allocation
+	void handlePhi();
 	//creates a JITmethod associated with m, inserts instructions into it, and adds it to JITmethods
 	void genX86(JITmethod& jit, SSAmethod& m);
 
@@ -30,7 +33,9 @@ private:
 	void iBinary(JITmethod& jit, RegMap& map, SSA::Instruction* ins);
 	void iUnary(JITmethod& jit, RegMap& map, SSA::Instruction* ins);
 	void call(JITmethod& jit, RegMap& map, SSA::Instruction* ins);
-	//void cmp(JITmethod& jit, RegMap& map, SSA::Instruction* ins);
+	void cmp(JITmethod& jit, RegMap& map, SSA::Instruction* ins);
+	void jcc(JITmethod& jit, SSA::Instruction* ins);
+	void jmp(JITmethod& jit, SSA::Instruction* ins);
 	void mov(JITmethod& jit, RegMap& map, SSA::Instruction* ins);
 	void ret(JITmethod& jit);
 
@@ -40,6 +45,8 @@ private:
 	void iBinary_rmr(JITmethod& jit, SSAopcode ssa_opcode,uint8_t dest, uint8_t src1, uint8_t src2);
 	//binary op imm to rm
 	void iBinary_rimm(JITmethod& jit, SSAopcode ssa_opcode, uint8_t dest, uint8_t src1, uint32_t constValue);
+	//compare r against const, we can ONLY cmp against int of size 1 byte
+	void cmp_rimm(JITmethod& jit, uint8_t r, int8_t constValue);
 	//mov r to rm
 	void mov_rmr(JITmethod& jit, uint8_t dest, uint8_t src);
 	//mov imm to r

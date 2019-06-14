@@ -62,5 +62,15 @@ const uint8_t RET86 = 0xc3;			//return to caller, 86 because naming conflict
 const uint8_t SUB_RM_R = 0x29;		//sub r from rm
 const uint8_t SUB_RM_IMM = 0x81;	//sub imm from rm
 
+//jmp opcodes grouped together
+//append "_32" because naming conflict, but it means addr displacement is 32 bits
+const uint8_t JMP_32 = 0xE9;	//jump to 32 bit disp, jmp to r/m exists to but not necessary in this project
+const uint8_t JCC_PRE = 0x0F;	//prefix to be emitted before opcode
+const uint8_t JE_32 = 0x84;
+const uint8_t JNE_32 = 0x85;
+const uint8_t JL_32 = 0x8C;
+const uint8_t JLE_32 = 0x8E;
+const uint8_t JG_32 = 0x8F;
+const uint8_t JGE_32 = 0x8D;
 
 #endif

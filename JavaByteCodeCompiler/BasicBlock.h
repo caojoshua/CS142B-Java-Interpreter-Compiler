@@ -33,8 +33,12 @@ public:
 	int getInStackDepth();
 	std::list<int> getPred();
 	std::list<int> getSucc();
-	std::vector<SSA::Instruction*> getInstructions();
+	//return reference to do direct operations e.g. x86 handling of phi functions
+	std::vector<SSA::Instruction*>& getInstructions();
+	//appends instruction
 	void addInstruction(SSA::Instruction* i);
+	//appends instruction, but before cmp/branch
+	void addInstructionBeforeJmp(SSA::Instruction* i);
 	void addPhi(SSA::Operand op);
 	void addPhi(SSA::PhiInstruction* phi);
 	//adds phi src with basicblock index bb to phi with destination dest

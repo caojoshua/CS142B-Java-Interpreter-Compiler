@@ -50,7 +50,7 @@ std::list<int> BasicBlock::getSucc()
 	return succ;
 }
 
-std::vector<SSA::Instruction*> BasicBlock::getInstructions()
+std::vector<SSA::Instruction*>& BasicBlock::getInstructions()
 {
 	return instructions;
 }
@@ -58,6 +58,23 @@ std::vector<SSA::Instruction*> BasicBlock::getInstructions()
 void BasicBlock::addInstruction(SSA::Instruction * i)
 {
 	instructions.push_back(i);
+}
+
+void BasicBlock::addInstructionBeforeJmp(SSA::Instruction * i)
+{
+	for (std::vector<SSA::Instruction*>::const_reverse_iterator iter = instructions.crbegin(); iter != instructions.crend(); ++iter)
+	{
+		//continue if we see cmp, jmp, or jcc
+		SSAopcode opcode = (*iter)->getSSAopcode();
+		if (opcode == CMP || opcode == JMP || std::find(JCC.cbegin(), JCC.cend(), opcode) != JCC.cend())
+		{
+			continue;
+		}
+		//if not cmp, jmp or jcc, insert instruction and return
+		//call base() to get const_iter, since insert doesn't accept const_reverse_iter
+		instructions.insert(iter.base(), i);
+		return;
+	}
 }
 
 void BasicBlock::addPhi(SSA::Operand op)

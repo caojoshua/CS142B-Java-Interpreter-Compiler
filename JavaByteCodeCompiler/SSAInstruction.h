@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 #include <list>
+#include <array>
 
 
 //SSA opcodes, useful for x86 generation
@@ -24,28 +25,33 @@ enum SSAopcode
 	DEC,
 	CALL,
 	CMP,
-	CONDBRANCH,
-	UNCONDBRANCH,
+	JE,
+	JNE,
+	JL,
+	JLE,
+	JG,
+	JGE,
+	JMP,
 	RET,
 	PHI
 };
 
+//jcc array
+const std::array<SSAopcode, 6> JCC =
+{
+	JE,
+	JNE,
+	JL,
+	JLE,
+	JG,
+	JGE
+};
 
 
 //lot of memory leaks here
 
 namespace SSA
 {
-	/*class Method
-	{
-	private:
-		std::string name;
-		std::vector<BasicBlock> bbs;
-	public:
-		Method(std::string name, std::vector<BasicBlock> bbs) : name(name), bbs(bbs) {}
-		std::string getName();
-		std::vector<BasicBlock> getBasicBlocks();
-	};*/
 
 	class Operand
 	{
@@ -96,6 +102,7 @@ namespace SSA
 	public:
 		Branch(int targetBasicBlock) : targetBasicBlock(targetBasicBlock) {}
 		std::string getStr() const;
+		int getTargetBB() const;
 	};
 
 	class Instruction
@@ -122,6 +129,7 @@ namespace SSA
 		virtual std::list<std::pair<int, Operand*>> getPhiSrcs();
 		//for call instruction
 		virtual std::string getMethodName();
+		virtual Branch getBranch();
 	};
 
 	class MovInstruction : public Instruction
@@ -223,16 +231,19 @@ namespace SSA
 		virtual std::vector<Operand*> getSrcs() const;
 		void setSrc1(OperandUse op);
 		virtual void setSrcs(std::vector<OperandUse> srcs);
+		//returns branch2, because we assume thats the branch thats targets the basic block NOT right after branch
+		virtual Branch getBranch();
 	};
 
 	class UncondBranchInstruction : public Instruction
 	{
 	private:
-		Branch branch1;
+		Branch branch;
 	public:
-		UncondBranchInstruction(Branch branch1) : branch1(branch1) {}
+		UncondBranchInstruction(Branch branch1) : branch(branch1) {}
 		std::string getStr() const;
 		virtual SSAopcode getSSAopcode() const;
+		virtual Branch getBranch();
 	};
 
 	class CallInstruction : public Instruction

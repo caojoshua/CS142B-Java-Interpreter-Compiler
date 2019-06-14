@@ -16,7 +16,7 @@ private:
 public:
 	SSAmethod(std::string name, std::vector<BasicBlock> bbs) : name(name), bbs(bbs) {}
 	std::string getName();
-	std::vector<BasicBlock> getBasicBlocks();
+	std::vector<BasicBlock>& getBasicBlocks();
 	RegMap getMap();
 	void addRegMap(RegMap map);
 };

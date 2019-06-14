@@ -73,6 +73,38 @@ void JITmethod::emit64(uint64_t byte)
 	}
 }
 
+void JITmethod::newBBaddr(int BBindex)
+{
+	BBaddrs.push_back(std::pair<int, uint32_t> (BBindex, count));
+}
+
+void JITmethod::newJmpAddr(int BBindex)
+{
+	jmpAddrs.push_back(std::pair<uint32_t,int> (count, BBindex));
+}
+
+void JITmethod::relocateJmps()
+{
+	//relocate each jmp addr
+	for (std::pair<uint32_t, int>& jmpAddr : jmpAddrs)
+	{
+		//find the associated basic block
+		for (std::pair<int, uint32_t>& BBaddr : BBaddrs)
+		{
+			if (jmpAddr.second == BBaddr.first)
+			{
+				//insert address; address is a displacement from AFTER jmpAddr
+				int32_t BBdisp = BBaddr.second - (jmpAddr.first + 4);
+				for (int i = 0; i < 4; ++i)
+				{
+					*(heapPtr + jmpAddr.first + i) = (uint8_t)(BBdisp & 0xFF);
+					BBdisp = BBdisp >> 8;
+				}
+			}
+		}
+	}
+}
+
 void JITmethod::execute()
 {
 	//maybe attach a return to make sure we always return, double returns shouldn't be a big deal
@@ -81,4 +113,15 @@ void JITmethod::execute()
 	fptr funcPtr = (fptr) heapPtr;
 	funcPtr();
 	printf("returned from x86 execution!");
+}
+
+void JITmethod::print()
+{
+	//output after inserting jmp addrs
+	printf("X86 code after inserting jmp addrs\n");
+	for(int i = 0; i < count; ++i)
+	{
+		printf("\\x%X ", *(heapPtr + i));
+	}
+	printf("\n");
 }

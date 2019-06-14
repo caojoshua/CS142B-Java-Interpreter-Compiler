@@ -2,6 +2,56 @@
 
 
 
+void RegAllocator::handlePhi(std::vector<BasicBlock>& bbs)
+{
+	//get reference to vector of basic blocks
+	//loop through each basic block bb, which is a reference
+	for(BasicBlock& bb : bbs)
+	{
+		//keep going until we don't find phi
+		while (true)
+		{
+			bool foundPhi = false;
+			//go through each instruction and look for phi functions
+			std::vector<SSA::Instruction*>& instructions = bb.getInstructions();
+			for (std::vector<SSA::Instruction*>::const_iterator& iter = instructions.cbegin(); iter != instructions.cend(); ++iter)
+			{
+				SSA::Instruction* ins = *iter;
+				if (ins->isPhi())
+				{
+					SSA::Operand* phiDest = ins->getDest();
+					//add mov instructions before jmp to source basic blocks
+					for (std::pair<int, SSA::Operand*> phiSrc : ins->getPhiSrcs())
+					{
+						bbs[phiSrc.first].addInstructionBeforeJmp(new SSA::MovInstruction(phiDest, phiSrc.second));
+					}
+					//erase function and break out of loop
+					//not the most efficient, but its annoying to remove items while looping, so this does the job
+					instructions.erase(iter);
+					foundPhi = true;
+					break;
+				}
+			}
+			//break out of loop when there is no more phi
+			if(!foundPhi)
+			{
+				break;
+			}
+		}
+	}
+	//output for testing that phi funcs were handled correctly
+	/*printf("SSA after handling phi\n");
+	for(unsigned int i = 0; i < bbs.size(); ++i)
+	{
+		BasicBlock BB = bbs[i];
+		printf("Basic Block (#%d)\n", i);
+		for (SSA::Instruction* i : BB.getInstructions())
+		{
+			printf("%s\n", i->getStr().c_str());
+		}
+	}*/
+}
+
 void RegAllocator::computeLiveIntervals(IntervalList& intervals, std::vector<BasicBlock>& bbs)
 {
 	//loop through blocks in reverse order
@@ -123,7 +173,8 @@ void RegAllocator::computeLiveIntervals(IntervalList& intervals, std::vector<Bas
 		//set b's livein to live
 		for(SSA::OperandUse opd : live)
 		{
-			b.addLiveIn(opd);
+			//make sure we update the BB in the vector
+			bbs[i].addLiveIn(opd);
 		}
 		//add bIntervals to intervals
 		intervals += bIntervals;
@@ -274,6 +325,8 @@ void RegAllocator::regAlloc(SSAoutput& ssa)
 	for (SSAmethod& m : ssa.getOutput())
 	{
 		printf("%s\n", m.getName().c_str());
+		//special handling of phi
+		handlePhi(m.getBasicBlocks());
 		//compute intervals
 		IntervalList intervals;
 		computeLiveIntervals(intervals, m.getBasicBlocks());

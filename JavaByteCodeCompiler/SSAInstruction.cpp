@@ -70,6 +70,11 @@ std::string SSA::Instruction::getMethodName()
 	return std::string();
 }
 
+SSA::Branch SSA::Instruction::getBranch()
+{
+	return Branch(-1);
+}
+
 SSA::Operand::Operand(const Operand & other)
 {
 	opType = other.opType;
@@ -135,6 +140,11 @@ bool SSA::Operand::sameUse(Operand* other) const
 std::string SSA::Branch::getStr() const
 {
 	return "#" + std::to_string(targetBasicBlock);
+}
+
+int SSA::Branch::getTargetBB() const
+{
+	return targetBasicBlock;
 }
 
 std::string SSA::MovInstruction::getStr() const
@@ -434,7 +444,21 @@ std::string SSA::CondBranchInstruction::getStr() const
 
 SSAopcode SSA::CondBranchInstruction::getSSAopcode() const
 {
-	return CONDBRANCH;
+	switch (opcode)
+	{
+		case eq:
+			return JE;
+		case ne:
+			return JNE;
+		case lt:
+			return JL;
+		case lte:
+			return JLE;
+		case gt:
+			return JG;
+		case gte:
+			return JGE;
+	}
 }
 
 SSA::Operand* SSA::CondBranchInstruction::getSrc1() const
@@ -464,14 +488,24 @@ void SSA::CondBranchInstruction::setSrcs(std::vector<OperandUse> srcs)
 	cond = new OperandUse(srcs[0]);
 }
 
+SSA::Branch SSA::CondBranchInstruction::getBranch()
+{
+	return branch2;
+}
+
 std::string SSA::UncondBranchInstruction::getStr() const
 {
-	return "BRUNCOND " + branch1.getStr();
+	return "BRUNCOND " + branch.getStr();
 }
 
 SSAopcode SSA::UncondBranchInstruction::getSSAopcode() const
 {
-	return UNCONDBRANCH;
+	return JMP;
+}
+
+SSA::Branch SSA::UncondBranchInstruction::getBranch()
+{
+	return branch;
 }
 
 std::string SSA::CallInstruction::getStr() const

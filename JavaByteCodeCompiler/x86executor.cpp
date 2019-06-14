@@ -35,6 +35,61 @@ void x86executor::createJITmethods()
 	}
 }
 
+void x86executor::handlePhi()
+{
+	//handle phi in each method
+	for (SSAmethod& m : SSAout.getOutput())
+	{
+		//get reference to vector of basic blocks
+		std::vector<BasicBlock>& BBs = m.getBasicBlocks();
+		//loop through each basic block bb, which is a reference
+		for(BasicBlock& bb : BBs)
+		{
+			//keep going until we don't find phi
+			while (true)
+			{
+				bool foundPhi = false;
+				//go through each instruction and look for phi functions
+				std::vector<SSA::Instruction*>& instructions = bb.getInstructions();
+				for (std::vector<SSA::Instruction*>::const_iterator& iter = instructions.cbegin(); iter != instructions.cend(); ++iter)
+				{
+					SSA::Instruction* ins = *iter;
+					if (ins->isPhi())
+					{
+						SSA::Operand* phiDest = ins->getDest();
+						//add mov instructions before jmp to source basic blocks
+						for (std::pair<int, SSA::Operand*> phiSrc : ins->getPhiSrcs())
+						{
+							BBs[phiSrc.first].addInstructionBeforeJmp(new SSA::MovInstruction(phiDest, phiSrc.second));
+						}
+						//erase function and break out of loop
+						//not the most efficient, but its annoying to remove items while looping, so this does the job
+						instructions.erase(iter);
+						foundPhi = true;
+						break;
+					}
+				}
+				//break out of loop when there is no more phi
+				if(!foundPhi)
+				{
+					break;
+				}
+			}
+		}
+		//output for testing that phi funcs were handled correctly
+		printf("SSA after handling phi\n");
+		for(unsigned int i = 0; i < BBs.size(); ++i)
+		{
+			BasicBlock BB = BBs[i];
+			printf("Basic Block (#%d)\n", i);
+			for (SSA::Instruction* i : BB.getInstructions())
+			{
+				printf("%s\n", i->getStr().c_str());
+			}
+		}
+	}
+}
+
 void x86executor::genX86(JITmethod& jit, SSAmethod& m)
 {
 	//define useful variables
@@ -53,6 +108,8 @@ void x86executor::genX86(JITmethod& jit, SSAmethod& m)
 	for (int i = 0; i < bbs.size(); ++i)
 	{
 		BasicBlock bb = bbs[i];
+		//create new BBaddr for jmp relocation
+		jit.newBBaddr(bb.getIndex());
 		//go through instructions of bb
 		for (SSA::Instruction* ins : bb.getInstructions())
 		{
@@ -79,11 +136,20 @@ void x86executor::genX86(JITmethod& jit, SSAmethod& m)
 				call(jit, map, ins);
 				break;
 			case CMP:
+				cmp(jit, map, ins);
 			break;
-			case CONDBRANCH:
-			break;
-			case UNCONDBRANCH:
-			break;
+			//do same for all jcc
+			case JE:
+			case JNE:
+			case JL:
+			case JLE:
+			case JG:
+			case JGE:
+				jcc(jit, ins);
+				break;
+			case JMP:
+				jmp(jit, ins);
+				break;
 			case RET:
 				ret(jit);
 				break;
@@ -95,23 +161,7 @@ void x86executor::genX86(JITmethod& jit, SSAmethod& m)
 			}
 		}
 	}
-	//SPECIAL PHI HANDLING TODO: figure out how to insert mov functions for phi
-	for(BasicBlock bb : bbs)
-	{
-		for (SSA::Instruction* ins : bb.getInstructions())
-		{
-			if(ins->isPhi())
-			{
-				//for each phi src, find its associate basic block and insert mov from src to dest
-				for(std::pair<int, SSA::Operand*> phiSrc : ins->getPhiSrcs())
-				{
-					//insert code at end of basic blocks here
-				}
-			}
-		}
-	}
-
-	//printf("%X\n",EAX);
+	jit.relocateJmps();
 }
 
 void x86executor::iBinary(JITmethod & jit, RegMap & map, SSA::Instruction * ins)
@@ -209,6 +259,75 @@ void x86executor::call(JITmethod & jit, RegMap & map, SSA::Instruction* ins)
 	pop(jit, EDX);
 	pop(jit, ECX);
 	pop(jit, EAX);
+}
+
+void x86executor::cmp(JITmethod & jit, RegMap & map, SSA::Instruction * ins)
+{
+	SSA::OperandUse src1(ins->getSrc1());
+	SSA::OperandUse src2(ins->getSrc2());
+	//90% sure java bytecode optimizes out comparisons between two constants
+	//so we can assume at least one of two srcs is a var
+	//first check if one of two srcs is constant
+	if (src1.isConst())
+	{
+		cmp_rimm(jit, intToReg[map.getReg(src2)], src1.getVal());
+	}
+	else if (src2.isConst())
+	{
+		cmp_rimm(jit, intToReg[map.getReg(src1)], src2.getVal());
+	}
+	//both srcs are var
+	else
+	{
+		jit.emit(CMP_RM_R);
+		jit.emit(modrm(MOD_REG, intToReg[map.getReg(src2)], intToReg[map.getReg(src1)]));
+	}
+}
+
+void x86executor::jcc(JITmethod & jit, SSA::Instruction * ins)
+{
+	uint8_t opcode;
+	switch (ins->getSSAopcode())
+	{
+	case JE:
+		opcode = JE_32;
+		break;
+	case JNE:
+		opcode = JNE_32;
+		break;
+	case JL:
+		opcode = JL_32;
+		break;
+	case JLE:
+		opcode = JLE_32;
+		break;
+	case JG:
+		opcode = JG_32;
+		break;
+	case JGE:
+		opcode = JGE_32;
+		break;
+	default:
+		return;
+	}
+	//emit code
+	//first emit prfix and opcode
+	jit.emit(JCC_PRE);
+	jit.emit(opcode);
+	//associate this jmp addr with its target BB
+	jit.newJmpAddr(ins->getBranch().getTargetBB());
+	//placeholder, we will fill this in with right BB address after emitting all code in JITmethod
+	jit.emit32(0); 
+}
+
+void x86executor::jmp(JITmethod & jit, SSA::Instruction * ins)
+{
+	//emit opcode
+	jit.emit(JMP_32);
+	//associate this jmp addr with its target BB
+	jit.newJmpAddr(ins->getBranch().getTargetBB());
+	//placeholder, we will fill this in with right BB address after emitting all code in JITmethod
+	jit.emit32(0); 
 }
 
 void x86executor::mov(JITmethod& jit, RegMap& map, SSA::Instruction* ins)
@@ -310,6 +429,15 @@ void x86executor::iBinary_rimm(JITmethod& jit, SSAopcode ssa_opcode, uint8_t des
 	jit.emit(opcode);
 	jit.emit(modrm(MOD_REG, slashDigit, dest));
 	jit.emit32(constValue);
+}
+
+void x86executor::cmp_rimm(JITmethod & jit, uint8_t r, int8_t constValue)
+{
+	jit.emit(CMP_RM_IMM);
+	// /7
+	jit.emit(modrm(MOD_REG, 7, r));
+	//emit immediate value we are comparing against
+	jit.emit(constValue);
 }
 
 void x86executor::mov_rmr(JITmethod& jit, uint8_t dest, uint8_t src)
@@ -427,6 +555,8 @@ void x86executor::execute()
 {
 	//first create methods, we need to do this first or else we won't know addresses of methods when we want to call them
 	createJITmethods();
+	//special handling for phi functions before generating x86
+	//handlePhi();
  	//generate machine code
 	for (JITmethod& jit : JITmethods)
 	{
@@ -438,38 +568,15 @@ void x86executor::execute()
 				genX86(jit, m);
 			}
 		}
+		jit.print();
 	}
-	
-	//WORKING CALL TO PRINTLN
-	//printf("\n\nTEST");
-	//JITmethod test("test");
-	////epilogue(test);
-	//mov_rimm(test, EAX, (uint32_t)0x6969);
-	//push(test, EAX);
-	//mov_rimm(test, EAX, (uint32_t) &Println);
-	//test.emit(CALL_RM);
-	//test.emit(modrm(MOD_REG, 2, EAX));
-	//ret(test);
-	//test.execute();
-
-	//Println(69);
-	////TRYING CALL TO JITmethod
-	//printf("\n\nTEST");
-	//JITmethod test("test");
-	////epilogue(test);
-	//mov_rimm(test, EAX, (uint32_t)0x6969);
-	//push(test, EAX);
-	//mov_rimm(test, EAX, (uint32_t) getJITmethod("PrintInt").getHeapPtr());
-	//test.emit(CALL_RM);
-	//test.emit(modrm(MOD_REG, 2, EAX));
-	//ret(test);
-	//test.execute();
 	
 	//execute main function
 	for (JITmethod jit : JITmethods)
 	{
 		if (jit.getName() == "main")
 		{
+			//comment out following line if you don't want to run JIT code, and just see output
 			jit.execute();
 			return;
 		}
@@ -485,5 +592,5 @@ void Println(int i)
 {
 	//i &= 0xFFFFFFFF;
 	printf("%d\n", i);
-	printf("0x%x\n", i);
+	//printf("0x%x\n", i);
 }

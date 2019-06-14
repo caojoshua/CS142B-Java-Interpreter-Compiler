@@ -26,7 +26,7 @@ std::string SSAmethod::getName()
 	return name;
 }
 
-std::vector<BasicBlock> SSAmethod::getBasicBlocks()
+std::vector<BasicBlock>& SSAmethod::getBasicBlocks()
 {
 	return bbs;
 }
