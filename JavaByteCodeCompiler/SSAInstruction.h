@@ -61,6 +61,7 @@ namespace SSA
 		OpType opType;
 		int val;
 	public:
+		Operand() : opType(null_op), val(0) {}
 		Operand(OpType opType, int val) : opType(opType), val(val) {}
 		Operand(const Operand& other);
 		virtual bool operator==(const Operand& other) const;
@@ -130,6 +131,8 @@ namespace SSA
 		//for call instruction
 		virtual std::string getMethodName();
 		virtual Branch getBranch();
+		//call/ret instructions
+		virtual bool getIsVoid() const;
 	};
 
 	class MovInstruction : public Instruction
@@ -223,7 +226,6 @@ namespace SSA
 		Branch branch1;
 		Branch branch2;
 	public:
-		//CondBranchInstruction(Opcode opcode, Operand* cond, Branch branch1, Branch branch2) : opcode(opcode), cond(cond), branch1(branch1), branch2(branch2) {
 		CondBranchInstruction(Opcode opcode, Operand* cond, Branch branch1, Branch branch2);
 		std::string getStr() const;
 		virtual SSAopcode getSSAopcode() const;
@@ -250,14 +252,18 @@ namespace SSA
 	{
 	private:
 		std::string methodName;
+		bool isVoid; //represents whether the called method is void
+		Operand* dest;
 		std::list<Operand*> args;
 	public:
-		CallInstruction(std::string m, std::list<Operand*> args) : methodName(m), args(args){}
+		CallInstruction(std::string m, bool isVoid, Operand* dest, std::list<Operand*> args) : methodName(m), isVoid(isVoid), dest(dest), args(args){}
 		std::string getStr() const;
 		virtual std::string getMethodName();
 		virtual SSAopcode getSSAopcode() const;
+		Operand* getDest() const;
 		virtual std::vector<Operand*> getSrcs() const;
 		virtual void setSrcs(std::vector<OperandUse> srcs);
+		virtual bool getIsVoid() const;
 	};
 
 	class ReturnInstruction : public Instruction
@@ -274,6 +280,7 @@ namespace SSA
 		virtual std::vector<Operand*> getSrcs() const;
 		void setSrc1(OperandUse op);
 		virtual void setSrcs(std::vector<OperandUse> srcs);
+		virtual bool getIsVoid() const;
 	};
 
 	//TODO this class

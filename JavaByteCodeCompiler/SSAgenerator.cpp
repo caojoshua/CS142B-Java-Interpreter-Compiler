@@ -255,7 +255,7 @@ std::vector<BasicBlock> SSAgenerator::genBasicBlockCode(Method& m, std::list<int
 				{
 					std::list<SSA::Operand*> args;
 					args.push_back(new SSA::Operand(SSA::Operand::stack, --stackCount));
-					basicBlock.addInstruction(new SSA::CallInstruction("Println", args));
+					basicBlock.addInstruction(new SSA::CallInstruction("Println", true, new SSA::Operand(), args));
 					i += 2;
 					break;
 				}
@@ -423,10 +423,12 @@ void SSAgenerator::call(BasicBlock & b, int& stackCount, int constPoolIndex)
 	char returnType = descriptor[descriptor.length() - 1];
 	if (returnType == 'I')
 	{
-		++stackCount;
+		b.addInstruction(new SSA::CallInstruction(m.getName(), false, new SSA::Operand(SSA::Operand::stack, ++stackCount), args));
 	}
-	//create CALL instruction and add the b
-	b.addInstruction(new SSA::CallInstruction(m.getName(), args));
+	else
+	{
+		b.addInstruction(new SSA::CallInstruction(m.getName(), true, new SSA::Operand(), args));
+	}
 }
 
 Method SSAgenerator::getMethod(std::string name)
@@ -705,7 +707,7 @@ SSAoutput SSAgenerator::generate()
 		if (m.getName() != "<init>")
 		{
 			std::vector<BasicBlock> BBs = createBasicBlocks(m);
-			out.addMethod(m.getName(), BBs);
+			out.addMethod(m.getName(), m.getIsVoid(), BBs);
 		}
 	}
 	return out;

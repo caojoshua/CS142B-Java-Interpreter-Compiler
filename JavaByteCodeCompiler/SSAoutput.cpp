@@ -11,9 +11,9 @@ SSAoutput::~SSAoutput()
 {
 }
 
-void SSAoutput::addMethod(std::string name, std::vector<BasicBlock> bbs)
+void SSAoutput::addMethod(std::string name, bool isVoid, std::vector<BasicBlock> bbs)
 {
-	out.push_back(SSAmethod(name, bbs));
+	out.push_back(SSAmethod(name, isVoid, bbs));
 }
 
 std::list<SSAmethod>& SSAoutput::getOutput()
@@ -24,6 +24,11 @@ std::list<SSAmethod>& SSAoutput::getOutput()
 std::string SSAmethod::getName()
 {
 	return name;
+}
+
+bool SSAmethod::getIsVoid()
+{
+	return isVoid;
 }
 
 std::vector<BasicBlock>& SSAmethod::getBasicBlocks()

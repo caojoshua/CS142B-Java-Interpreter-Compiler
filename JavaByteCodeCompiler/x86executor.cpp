@@ -151,7 +151,7 @@ void x86executor::genX86(JITmethod& jit, SSAmethod& m)
 				jmp(jit, ins);
 				break;
 			case RET:
-				ret(jit);
+				ret(jit, map, ins);
 				break;
 			case PHI:
 				//we ignore these, special handling of phi functions at end of each basic block
@@ -219,7 +219,7 @@ void x86executor::call(JITmethod & jit, RegMap & map, SSA::Instruction* ins)
 	push(jit, ECX);
 	push(jit, EDX);
 	//push arguments
-	//only do this for println for now since our own functions are busted
+	//only do this for println for now since our own functions mov args into caller saved regs
 	if (methodName == "Println")
 	{
 		for (SSA::Operand* op : args)
@@ -227,7 +227,8 @@ void x86executor::call(JITmethod & jit, RegMap & map, SSA::Instruction* ins)
 			push(jit, map, op);
 		}
 	}
-	//try saving to caller saved registers since pushing isn't working
+	//mov params to caller saved registers, easier than pushing/popping
+	//this will break if number of params > 6
 	for(int i = 0; i < args.size(); ++i)
 	{
 		if (args[i]->isConst())
@@ -255,10 +256,19 @@ void x86executor::call(JITmethod & jit, RegMap & map, SSA::Instruction* ins)
 			pop(jit, EDX);
 		}
 	}
-	//pop edx, ecx, eaz
+	//pop edx, ecx
 	pop(jit, EDX);
 	pop(jit, ECX);
-	pop(jit, EAX);
+	//pop eax if is void, otherwise move eax into destination and increment esp
+	if (ins->getIsVoid())
+	{
+		pop(jit, EAX);
+	}
+	else
+	{
+		mov_rmr(jit, intToReg[map.getReg(ins->getDest())], EAX);
+		iBinary_rimm(jit, ADD, ESP, ESP, 4);
+	}
 }
 
 void x86executor::cmp(JITmethod & jit, RegMap & map, SSA::Instruction * ins)
@@ -346,8 +356,13 @@ void x86executor::mov(JITmethod& jit, RegMap& map, SSA::Instruction* ins)
 	}
 }
 
-void x86executor::ret(JITmethod & jit)
+void x86executor::ret(JITmethod & jit, RegMap& map, SSA::Instruction* ins)
 {
+	//if exists, mov return value into EAX if 
+	if(!(ins->getIsVoid()))
+	{
+		mov_rmr(jit, EAX, intToReg[map.getReg(ins->getSrc1())]);
+	}
 	//pop edi, esi, ebx
 	pop(jit, EDI);
 	pop(jit, ESI);

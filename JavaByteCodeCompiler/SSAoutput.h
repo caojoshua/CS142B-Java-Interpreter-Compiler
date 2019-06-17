@@ -11,11 +11,13 @@ class SSAmethod
 {
 private:
 	std::string name;
+	bool isVoid;
 	std::vector<BasicBlock> bbs;
 	RegMap map;
 public:
-	SSAmethod(std::string name, std::vector<BasicBlock> bbs) : name(name), bbs(bbs) {}
+	SSAmethod(std::string name, bool isVoid, std::vector<BasicBlock> bbs) : name(name), isVoid(isVoid), bbs(bbs) {}
 	std::string getName();
+	bool getIsVoid();
 	std::vector<BasicBlock>& getBasicBlocks();
 	RegMap getMap();
 	void addRegMap(RegMap map);
@@ -29,7 +31,7 @@ private:
 public:
 	SSAoutput();
 	~SSAoutput();
-	void addMethod(std::string name, std::vector<BasicBlock> bbs);
+	void addMethod(std::string name, bool isVoid, std::vector<BasicBlock> bbs);
 	std::list<SSAmethod>& getOutput();
 };
 

@@ -30,14 +30,18 @@ private:
 	void genX86(JITmethod& jit, SSAmethod& m);
 
 	//helpers called from switch statement, all inserts instructions into jit
+	//decided only to support add/sub, mul,div,shl,shr have different formats
+	//mul and div are especially annoying because they use eax and edx, and store result in eax
+	//would need to adjust register alloc to implement these, not worth it
 	void iBinary(JITmethod& jit, RegMap& map, SSA::Instruction* ins);
+	//supports inc and dec, which just becomes add/sub
 	void iUnary(JITmethod& jit, RegMap& map, SSA::Instruction* ins);
 	void call(JITmethod& jit, RegMap& map, SSA::Instruction* ins);
 	void cmp(JITmethod& jit, RegMap& map, SSA::Instruction* ins);
 	void jcc(JITmethod& jit, SSA::Instruction* ins);
 	void jmp(JITmethod& jit, SSA::Instruction* ins);
 	void mov(JITmethod& jit, RegMap& map, SSA::Instruction* ins);
-	void ret(JITmethod& jit);
+	void ret(JITmethod& jit, RegMap& map, SSA::Instruction* ins);
 
 	//further helpers to insert specific instructions that are seen commonly e.g. mov
 	//arguments are registers

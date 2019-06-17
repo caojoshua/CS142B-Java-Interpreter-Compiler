@@ -75,6 +75,11 @@ SSA::Branch SSA::Instruction::getBranch()
 	return Branch(-1);
 }
 
+bool SSA::Instruction::getIsVoid() const
+{
+	return true;
+}
+
 SSA::Operand::Operand(const Operand & other)
 {
 	opType = other.opType;
@@ -535,6 +540,11 @@ SSAopcode SSA::CallInstruction::getSSAopcode() const
 	return CALL;
 }
 
+SSA::Operand * SSA::CallInstruction::getDest() const
+{
+	return new SSA::OperandUse(dest);
+}
+
 std::vector<SSA::Operand*> SSA::CallInstruction::getSrcs() const
 {
 	std::vector<Operand*> v;
@@ -551,11 +561,18 @@ void SSA::CallInstruction::setSrcs(std::vector<OperandUse> srcs)
 	{
 		throw 0;
 	}
+	int i = 0;
 	for (Operand*& arg : args)
 	{
 		delete arg;
-		arg = new OperandUse(srcs[0]);
+		arg = new OperandUse(srcs[i]);
+		++i;
 	}
+}
+
+bool SSA::CallInstruction::getIsVoid() const
+{
+	return isVoid;
 }
 
 std::string SSA::ReturnInstruction::getStr() const
@@ -595,6 +612,11 @@ void SSA::ReturnInstruction::setSrcs(std::vector<OperandUse> srcs)
 	}
 	delete src;
 	src = new OperandUse(srcs[0]);
+}
+
+bool SSA::ReturnInstruction::getIsVoid() const
+{
+	return isVoid;
 }
 
 std::string SSA::PhiInstruction::getStr() const

@@ -61,6 +61,16 @@ int32_t Method::getFourByte(int index)
 	return (uint32_t) a << 16 | b;
 }
 
+bool Method::getIsVoid()
+{
+	return isVoid;
+}
+
+void Method::setIsVoid(bool b)
+{
+	isVoid = b;
+}
+
 //std::vector<BasicBlock> Method::getBasicBlocks()
 //{
 //	return basicBlocks;
